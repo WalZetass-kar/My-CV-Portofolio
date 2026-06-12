@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
-import { writeFile } from "fs/promises";
-import path from "path";
 import { randomBytes } from "crypto";
 import { verifyAuth } from "@/lib/auth";
 import { ALLOWED_UPLOAD_TYPES, MAX_UPLOAD_SIZE } from "@/lib/validation";
+import { supabase } from "@/lib/supabase";
 
 const ALLOWED_EXTENSIONS = [".png", ".jpg", ".jpeg", ".webp", ".gif", ".pdf"];
+const BUCKET = "uploads";
 
 export async function POST(request: Request) {
   try {
@@ -28,20 +28,30 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "File type not allowed. Use PNG, JPG, WebP, GIF, or PDF." }, { status: 400 });
     }
 
-    const ext = path.extname(file.name).toLowerCase();
+    const ext = file.name.substring(file.name.lastIndexOf(".")).toLowerCase();
     if (!ALLOWED_EXTENSIONS.includes(ext)) {
       return NextResponse.json({ error: "File extension not allowed." }, { status: 400 });
     }
 
+    const filename = `${randomBytes(8).toString("hex")}${ext}`;
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
-    const filename = `${randomBytes(8).toString("hex")}${ext}`;
-    const filepath = path.join(process.cwd(), "public", "uploads", filename);
+    const { data, error } = await supabase.storage
+      .from(BUCKET)
+      .upload(filename, buffer, {
+        contentType: file.type,
+        upsert: false,
+      });
 
-    await writeFile(filepath, buffer);
+    if (error) {
+      console.error("Supabase upload error:", error);
+      return NextResponse.json({ error: "Upload failed: " + error.message }, { status: 500 });
+    }
 
-    return NextResponse.json({ url: `/uploads/${filename}` });
+    const { data: urlData } = supabase.storage.from(BUCKET).getPublicUrl(data.path);
+
+    return NextResponse.json({ url: urlData.publicUrl });
   } catch (e) {
     console.error("Upload error:", e);
     return NextResponse.json({ error: "Upload failed" }, { status: 500 });
