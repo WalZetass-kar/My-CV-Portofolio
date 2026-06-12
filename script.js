@@ -1,4 +1,81 @@
-document.addEventListener('DOMContentLoaded', function() {
+/* ═══════════════════════════════════════════
+   My CV Portfolio — Main Application Script
+   ═══════════════════════════════════════════ */
+
+/* ─── XSS Protection ─── */
+function escapeHTML(str) {
+    if (typeof str !== 'string') return '';
+    return str
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
+/* ─── Credential Security (SHA-256 hashing) ─── */
+async function sha256(message) {
+    const msgBuffer = new TextEncoder().encode(message);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+const ADMIN_CREDENTIALS_HASH = '9ba356d5670f691f86e91828f94185ec34991f1db24728a6855c6885df65b9fa';
+
+async function verifyCredentials(username, password) {
+    const combined = username + ':' + password;
+    const hash = await sha256(combined);
+    return hash === ADMIN_CREDENTIALS_HASH;
+}
+
+/* ─── State Variables ─── */
+let isLoggedIn = false;
+let isPortfolioLoggedIn = false;
+let portfolioItems = [];
+let currentPage = 1;
+let itemsPerPage = 6;
+let deleteId = null;
+let currentFilter = 'all';
+let currentSearch = '';
+let currentSort = 'newest';
+let currentCert = null;
+let currentCertCategory = 'cisco';
+let certLinks = {
+    cisco: {
+        intro: { name: 'Introduction to Cybersecurity', link: '', badge: '', hours: 15, year: '2026' },
+        network: { name: 'Network Defense', link: '', badge: '', hours: 20, year: '2026' },
+        endpoint: { name: 'Endpoint Security', link: '', badge: '', hours: 15, year: '2026' },
+        threat: { name: 'Cyber Threat Management', link: '', badge: '', hours: 15, year: '2026' },
+        ethical: { name: 'Ethical Hacker', link: '', badge: '', hours: 25, year: '2026' }
+    },
+    komdigi: {
+        digital: { name: 'Digital Talent Scholarship', link: '', badge: '', hours: 40, year: '2026' },
+        ai: { name: 'Artificial Intelligence Fundamentals', link: '', badge: '', hours: 30, year: '2026' },
+        cybersecurity: { name: 'Cybersecurity Awareness', link: '', badge: '', hours: 20, year: '2026' },
+        networking: { name: 'Network Administrator', link: '', badge: '', hours: 35, year: '2026' },
+        cloud: { name: 'Cloud Computing Basics', link: '', badge: '', hours: 25, year: '2026' }
+    },
+    bisaai: {
+        intro: { name: 'AI Introduction', link: '', badge: '', hours: 10, year: '2026' },
+        machine: { name: 'Machine Learning Dasar', link: '', badge: '', hours: 25, year: '2026' },
+        python: { name: 'Python untuk AI', link: '', badge: '', hours: 20, year: '2026' },
+        nlp: { name: 'Natural Language Processing', link: '', badge: '', hours: 30, year: '2026' },
+        vision: { name: 'Computer Vision', link: '', badge: '', hours: 30, year: '2026' }
+    }
+};
+
+/* ─── Game State ─── */
+let currentQuestion = 0;
+let score = 0;
+let timeLeft = 10;
+let timerInterval = null;
+let gameData = [];
+let currentAnswer = 0;
+let playerName = '';
+
+/* ─── Initialization ─── */
+document.addEventListener('DOMContentLoaded', function () {
     initThemeToggle();
     initNavigation();
     initBackToTop();
@@ -12,135 +89,146 @@ document.addEventListener('DOMContentLoaded', function() {
     initPortfolioFilters();
     initCertificateCategories();
     initCertCategorySelect();
-    
+    initModalClickOutside();
+    initEscapeKey();
+    initPopState();
+    initCharCounters();
+    initLoginEnterKeys();
+
     const hash = window.location.hash.substring(1);
     if (hash && document.getElementById(hash)) {
         showSection(hash);
     }
 });
 
-window.navigateToSection = function(sectionId) {
+/* ─── Navigation ─── */
+window.navigateToSection = function (sectionId) {
     showSection(sectionId);
     history.pushState(null, null, '#' + sectionId);
-    
     const section = document.getElementById(sectionId);
     if (section) {
         section.scrollIntoView({ behavior: 'smooth' });
     }
-}
-
-function initThemeToggle() {
-    const themeToggle = document.getElementById('themeToggle');
-    const body = document.body;
-    
-    const savedTheme = localStorage.getItem('theme') || 'light-mode';
-    body.className = savedTheme;
-    
-    themeToggle.addEventListener('click', function() {
-        if (body.classList.contains('light-mode')) {
-            body.classList.remove('light-mode');
-            body.classList.add('dark-mode');
-            localStorage.setItem('theme', 'dark-mode');
-        } else {
-            body.classList.remove('dark-mode');
-            body.classList.add('light-mode');
-            localStorage.setItem('theme', 'light-mode');
-        }
-    });
-}
-
-function initNavigation() {
-    const navLinks = document.querySelectorAll('.nav-link');
-    
-    navLinks.forEach(link => {
-        link.addEventListener('click', function(e) {
-            e.preventDefault();
-            const sectionId = this.getAttribute('href').substring(1);
-            showSection(sectionId);
-            history.pushState(null, null, '#' + sectionId);
-            
-            const navMenu = document.getElementById('navMenu');
-            if (navMenu) {
-                navMenu.classList.remove('active');
-            }
-            
-            const toggleIcon = document.querySelector('.nav-toggle i');
-            if (toggleIcon) {
-                toggleIcon.classList.remove('fa-times');
-                toggleIcon.classList.add('fa-bars');
-            }
-        });
-    });
-}
+};
 
 function showSection(sectionId) {
     const sections = document.querySelectorAll('.section');
     const navLinks = document.querySelectorAll('.nav-link');
-    
-    sections.forEach(section => {
+
+    sections.forEach(function (section) {
         section.classList.remove('active-section');
     });
-    
-    navLinks.forEach(link => {
+    navLinks.forEach(function (link) {
         link.classList.remove('active');
     });
-    
+
     const targetSection = document.getElementById(sectionId);
-    const targetLink = document.querySelector(`[href="#${sectionId}"]`);
-    
+    const targetLink = document.querySelector('.nav-link[href="#' + sectionId + '"]');
+
     if (targetSection) {
         targetSection.classList.add('active-section');
     }
-    
     if (targetLink) {
         targetLink.classList.add('active');
     }
 }
 
+function initNavigation() {
+    var navLinks = document.querySelectorAll('.nav-link');
+
+    navLinks.forEach(function (link) {
+        link.addEventListener('click', function (e) {
+            e.preventDefault();
+            var sectionId = this.getAttribute('href').substring(1);
+            showSection(sectionId);
+            history.pushState(null, null, '#' + sectionId);
+
+            var navMenu = document.getElementById('navMenu');
+            if (navMenu) navMenu.classList.remove('active');
+
+            var toggleIcon = document.querySelector('.nav-toggle i');
+            if (toggleIcon) {
+                toggleIcon.classList.remove('fa-times');
+                toggleIcon.classList.add('fa-bars');
+            }
+
+            var navToggle = document.getElementById('navToggle');
+            if (navToggle) navToggle.setAttribute('aria-expanded', 'false');
+        });
+    });
+}
+
+/* ─── Theme Toggle ─── */
+function initThemeToggle() {
+    var themeToggle = document.getElementById('themeToggle');
+    var body = document.body;
+
+    var savedTheme = localStorage.getItem('theme') || 'light-mode';
+    body.classList.remove('light-mode', 'dark-mode');
+    body.classList.add(savedTheme);
+    themeToggle.setAttribute('aria-pressed', savedTheme === 'dark-mode' ? 'true' : 'false');
+
+    themeToggle.addEventListener('click', function () {
+        var isDark = body.classList.contains('dark-mode');
+        body.classList.remove('light-mode', 'dark-mode');
+
+        if (isDark) {
+            body.classList.add('light-mode');
+            localStorage.setItem('theme', 'light-mode');
+            themeToggle.setAttribute('aria-pressed', 'false');
+        } else {
+            body.classList.add('dark-mode');
+            localStorage.setItem('theme', 'dark-mode');
+            themeToggle.setAttribute('aria-pressed', 'true');
+        }
+    });
+}
+
+/* ─── Back to Top ─── */
 function initBackToTop() {
-    const backToTop = document.getElementById('backToTop');
-    
-    window.addEventListener('scroll', function() {
+    var backToTop = document.getElementById('backToTop');
+
+    window.addEventListener('scroll', function () {
         if (window.scrollY > 300) {
             backToTop.classList.add('visible');
         } else {
             backToTop.classList.remove('visible');
         }
     });
-    
-    backToTop.addEventListener('click', function() {
-        window.scrollTo({
-            top: 0,
-            behavior: 'smooth'
-        });
-        showSection('home');
-        history.pushState(null, null, '#home');
+
+    backToTop.addEventListener('click', function () {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     });
 }
 
+/* ─── Mobile Menu ─── */
 function initMobileMenu() {
-    const navToggle = document.getElementById('navToggle');
-    const navMenu = document.getElementById('navMenu');
-    
+    var navToggle = document.getElementById('navToggle');
+    var navMenu = document.getElementById('navMenu');
+
     if (navToggle) {
-        navToggle.addEventListener('click', function() {
-            navMenu.classList.toggle('active');
-            
-            const icon = this.querySelector('i');
-            if (navMenu.classList.contains('active')) {
+        navToggle.addEventListener('click', function () {
+            var isActive = navMenu.classList.toggle('active');
+            navToggle.setAttribute('aria-expanded', isActive ? 'true' : 'false');
+
+            var icon = this.querySelector('i');
+            if (isActive) {
                 icon.classList.remove('fa-bars');
                 icon.classList.add('fa-times');
+                navToggle.setAttribute('aria-label', 'Tutup menu navigasi');
             } else {
                 icon.classList.remove('fa-times');
                 icon.classList.add('fa-bars');
+                navToggle.setAttribute('aria-label', 'Buka menu navigasi');
             }
         });
     }
-    
-    document.addEventListener('click', function(e) {
+
+    document.addEventListener('click', function (e) {
         if (navToggle && !navToggle.contains(e.target) && !navMenu.contains(e.target)) {
             navMenu.classList.remove('active');
-            const icon = navToggle.querySelector('i');
+            navToggle.setAttribute('aria-expanded', 'false');
+            var icon = navToggle.querySelector('i');
             if (icon) {
                 icon.classList.remove('fa-times');
                 icon.classList.add('fa-bars');
@@ -149,30 +237,36 @@ function initMobileMenu() {
     });
 }
 
-function showToast(message, type = 'success') {
-    const container = document.getElementById('toastContainer');
+/* ─── Toast Notifications ─── */
+function showToast(message, type) {
+    type = type || 'success';
+    var container = document.getElementById('toastContainer');
     if (!container) return;
-    
-    const toast = document.createElement('div');
-    toast.className = `toast ${type}`;
-    toast.innerHTML = `
-        <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'}"></i>
-        <span>${message}</span>
-    `;
-    
+
+    var iconMap = {
+        success: 'check-circle',
+        error: 'exclamation-circle',
+        warning: 'exclamation-triangle',
+        info: 'info-circle'
+    };
+
+    var toast = document.createElement('div');
+    toast.className = 'toast ' + type;
+    toast.setAttribute('role', 'alert');
+    toast.innerHTML =
+        '<i class="fas fa-' + (iconMap[type] || 'info-circle') + '" aria-hidden="true"></i>' +
+        '<span>' + escapeHTML(message) + '</span>';
+
     container.appendChild(toast);
-    
-    setTimeout(() => {
-        toast.remove();
+
+    setTimeout(function () {
+        if (toast.parentNode) toast.remove();
     }, 3000);
 }
 
-const ADMIN_USERNAME = "WalDevelop";
-const ADMIN_PASSWORD = "kartika";
-let isLoggedIn = false;
-
+/* ─── Certificate Admin Auth ─── */
 function checkLoginStatus() {
-    const savedStatus = localStorage.getItem('adminLoggedIn');
+    var savedStatus = localStorage.getItem('adminLoggedIn');
     if (savedStatus === 'true') {
         isLoggedIn = true;
         showAdminPanel();
@@ -180,32 +274,35 @@ function checkLoginStatus() {
     }
 }
 
-window.openLoginModal = function() {
+window.openLoginModal = function () {
     if (isLoggedIn) {
         showAdminPanel();
     } else {
-        const modal = document.getElementById('loginModal');
+        var modal = document.getElementById('loginModal');
         modal.style.display = 'block';
         document.body.style.overflow = 'hidden';
-        
+
         document.getElementById('username').value = '';
         document.getElementById('password').value = '';
         document.getElementById('loginError').style.display = 'none';
+        trapFocus(modal);
     }
-}
+};
 
-window.closeLoginModal = function() {
-    const modal = document.getElementById('loginModal');
+window.closeLoginModal = function () {
+    var modal = document.getElementById('loginModal');
     modal.style.display = 'none';
     document.body.style.overflow = 'auto';
-}
+};
 
-window.handleLogin = function() {
-    const username = document.getElementById('username').value;
-    const password = document.getElementById('password').value;
-    const errorElement = document.getElementById('loginError');
-    
-    if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
+window.handleLogin = async function () {
+    var username = document.getElementById('username').value.trim();
+    var password = document.getElementById('password').value;
+    var errorElement = document.getElementById('loginError');
+
+    var isValid = await verifyCredentials(username, password);
+
+    if (isValid) {
         isLoggedIn = true;
         localStorage.setItem('adminLoggedIn', 'true');
         closeLoginModal();
@@ -214,76 +311,66 @@ window.handleLogin = function() {
         showToast('Login berhasil! Selamat datang Admin.', 'success');
     } else {
         errorElement.style.display = 'block';
-        document.getElementById('username').style.borderColor = '#F56565';
-        document.getElementById('password').style.borderColor = '#F56565';
+        document.getElementById('username').classList.add('input-error');
+        document.getElementById('password').classList.add('input-error');
     }
-}
+};
 
 function showAdminPanel() {
-    const adminPanel = document.getElementById('adminPanel');
+    var adminPanel = document.getElementById('adminPanel');
     adminPanel.style.display = 'block';
     adminPanel.classList.add('visible');
 }
 
-window.closeAdminPanel = function() {
-    const adminPanel = document.getElementById('adminPanel');
+window.closeAdminPanel = function () {
+    var adminPanel = document.getElementById('adminPanel');
     adminPanel.style.display = 'none';
     adminPanel.classList.remove('visible');
-}
+};
 
-window.logoutAdmin = function() {
+window.logoutAdmin = function () {
     isLoggedIn = false;
     localStorage.removeItem('adminLoggedIn');
     closeAdminPanel();
     updateAdminButton();
     showToast('Logout berhasil!', 'info');
-}
-
-function updateAdminButton() {
-    const adminBtn = document.getElementById('adminLoginBtn');
-    const adminStatus = document.getElementById('adminStatus');
-    
-    if (isLoggedIn) {
-        adminBtn.innerHTML = '<i class="fas fa-user-shield"></i> Admin Panel (Active)';
-        adminStatus.innerHTML = 'Anda sudah login sebagai admin';
-        adminStatus.style.color = '#48BB78';
-    } else {
-        adminBtn.innerHTML = '<i class="fas fa-lock"></i> Admin Login';
-        adminStatus.innerHTML = 'Klik untuk login sebagai admin';
-        adminStatus.style.color = 'var(--text-secondary)';
-    }
-}
-
-let currentCert = null;
-let currentCertCategory = 'cisco';
-let certLinks = {
-    cisco: {
-        intro: { name: 'Introduction to Cybersecurity', link: '', badge: '', hours: 15 },
-        network: { name: 'Network Defense', link: '', badge: '', hours: 20 },
-        endpoint: { name: 'Endpoint Security', link: '', badge: '', hours: 15 },
-        threat: { name: 'Cyber Threat Management', link: '', badge: '', hours: 15 },
-        ethical: { name: 'Ethical Hacker', link: '', badge: '', hours: 25 }
-    },
-    komdigi: {
-        digital: { name: 'Digital Talent Scholarship', link: '', badge: '', hours: 40 },
-        ai: { name: 'Artificial Intelligence Fundamentals', link: '', badge: '', hours: 30 },
-        cybersecurity: { name: 'Cybersecurity Awareness', link: '', badge: '', hours: 20 },
-        networking: { name: 'Network Administrator', link: '', badge: '', hours: 35 },
-        cloud: { name: 'Cloud Computing Basics', link: '', badge: '', hours: 25 }
-    },
-    bisaai: {
-        intro: { name: 'AI Introduction', link: '', badge: '', hours: 10 },
-        machine: { name: 'Machine Learning Dasar', link: '', badge: '', hours: 25 },
-        python: { name: 'Python untuk AI', link: '', badge: '', hours: 20 },
-        nlp: { name: 'Natural Language Processing', link: '', badge: '', hours: 30 },
-        vision: { name: 'Computer Vision', link: '', badge: '', hours: 30 }
-    }
 };
 
+function updateAdminButton() {
+    var adminBtn = document.getElementById('adminLoginBtn');
+    var adminStatus = document.getElementById('adminStatus');
+
+    if (isLoggedIn) {
+        adminBtn.innerHTML = '<i class="fas fa-user-shield" aria-hidden="true"></i> Admin Panel (Active)';
+        adminStatus.textContent = 'Anda sudah login sebagai admin';
+        adminStatus.style.color = '#10B981';
+    } else {
+        adminBtn.innerHTML = '<i class="fas fa-lock" aria-hidden="true"></i> Admin Login';
+        adminStatus.textContent = 'Klik untuk login sebagai admin Sertifikat';
+        adminStatus.style.color = '';
+    }
+}
+
+/* ─── Certificates ─── */
 function loadCertLinks() {
-    const saved = localStorage.getItem('certLinks');
+    var saved = localStorage.getItem('certLinks');
     if (saved) {
-        certLinks = JSON.parse(saved);
+        try {
+            var parsed = JSON.parse(saved);
+            for (var cat in parsed) {
+                if (certLinks[cat]) {
+                    for (var key in parsed[cat]) {
+                        if (certLinks[cat][key]) {
+                            certLinks[cat][key].link = parsed[cat][key].link || '';
+                            certLinks[cat][key].badge = parsed[cat][key].badge || '';
+                            if (parsed[cat][key].year) certLinks[cat][key].year = parsed[cat][key].year;
+                        }
+                    }
+                }
+            }
+        } catch (e) {
+            // ignore corrupted localStorage
+        }
     }
     updateCertCategorySelect();
     filterCertificates('cisco');
@@ -294,36 +381,36 @@ function saveCertLinks() {
 }
 
 function initCertCategorySelect() {
-    const categorySelect = document.getElementById('certCategory');
+    var categorySelect = document.getElementById('certCategory');
     if (categorySelect) {
-        categorySelect.addEventListener('change', function() {
+        categorySelect.addEventListener('change', function () {
             updateCertCategorySelect();
         });
     }
 }
 
 function updateCertCategorySelect() {
-    const categorySelect = document.getElementById('certCategory');
+    var categorySelect = document.getElementById('certCategory');
     if (!categorySelect) return;
-    
-    const category = categorySelect.value;
-    const certSelect = document.getElementById('certSelect');
+
+    var category = categorySelect.value;
+    var certSelect = document.getElementById('certSelect');
     if (!certSelect) return;
-    
-    let options = '';
-    const certs = certLinks[category];
-    for (let key in certs) {
-        options += `<option value="${key}">${certs[key].name}</option>`;
+
+    var options = '';
+    var certs = certLinks[category];
+    for (var key in certs) {
+        options += '<option value="' + escapeHTML(key) + '">' + escapeHTML(certs[key].name) + '</option>';
     }
     certSelect.innerHTML = options;
 }
 
 function initCertificateCategories() {
-    const categoryBtns = document.querySelectorAll('.category-btn');
-    
-    categoryBtns.forEach(btn => {
-        btn.addEventListener('click', function() {
-            const category = this.getAttribute('data-category');
+    var categoryBtns = document.querySelectorAll('.category-btn');
+
+    categoryBtns.forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            var category = this.getAttribute('data-category');
             filterCertificates(category);
         });
     });
@@ -331,316 +418,274 @@ function initCertificateCategories() {
 
 function filterCertificates(category) {
     currentCertCategory = category;
-    
-    document.querySelectorAll('.category-btn').forEach(btn => {
+
+    document.querySelectorAll('.category-btn').forEach(function (btn) {
         btn.classList.remove('active');
+        btn.setAttribute('aria-selected', 'false');
     });
-    document.querySelector(`.category-btn[data-category="${category}"]`).classList.add('active');
-    
+    var activeBtn = document.querySelector('.category-btn[data-category="' + category + '"]');
+    if (activeBtn) {
+        activeBtn.classList.add('active');
+        activeBtn.setAttribute('aria-selected', 'true');
+    }
+
     renderCertificates();
 }
 
 function renderCertificates() {
-    const grid = document.getElementById('certificatesGrid');
-    const totalSpan = document.getElementById('totalCertificates');
-    const hoursSpan = document.getElementById('totalHours');
+    var grid = document.getElementById('certificatesGrid');
+    var totalSpan = document.getElementById('totalCertificates');
+    var hoursSpan = document.getElementById('totalHours');
     if (!grid) return;
-    
-    const certs = certLinks[currentCertCategory];
-    let totalHours = 0;
-    let html = '';
-    
-    for (let key in certs) {
-        const cert = certs[key];
+
+    var certs = certLinks[currentCertCategory];
+    var totalHours = 0;
+    var html = '';
+    var currentYear = new Date().getFullYear();
+
+    for (var key in certs) {
+        var cert = certs[key];
         totalHours += cert.hours || 0;
-        
-        const linkHtml = cert.link ? 
-            `<a href="${cert.link}" target="_blank" class="cert-link" id="link-${currentCertCategory}-${key}"><i class="fas fa-external-link-alt"></i> Buka Sertifikat</a>` : 
-            '';
-        
-        const badgeHtml = cert.badge ? 
-            `<img src="${cert.badge}" alt="Badge" class="cert-badge-img">` : 
-            '';
-        
-        const adminActions = isLoggedIn ? `
-            <div class="cert-item-actions">
-                <button onclick="editCertificate('${currentCertCategory}', '${key}')" class="btn-edit-portfolio" title="Edit">
-                    <i class="fas fa-edit"></i>
-                </button>
-            </div>
-        ` : '';
-        
-        let iconClass = 'fa-shield-halved';
+
+        var certYear = cert.year || currentYear.toString();
+
+        var linkHtml = cert.link
+            ? '<a href="' + escapeHTML(cert.link) + '" target="_blank" rel="noopener noreferrer" class="cert-link"><i class="fas fa-external-link-alt" aria-hidden="true"></i> Buka Sertifikat</a>'
+            : '';
+
+        var badgeHtml = cert.badge
+            ? '<img src="' + escapeHTML(cert.badge) + '" alt="Badge ' + escapeHTML(cert.name) + '" class="cert-badge-img" loading="lazy" onerror="this.style.display=\'none\'">'
+            : '';
+
+        var adminActions = isLoggedIn
+            ? '<div class="cert-item-actions">' +
+              '<button onclick="editCertificate(\'' + escapeHTML(currentCertCategory) + '\', \'' + escapeHTML(key) + '\')" class="btn-edit-portfolio" title="Edit" aria-label="Edit sertifikat ' + escapeHTML(cert.name) + '">' +
+              '<i class="fas fa-edit" aria-hidden="true"></i></button></div>'
+            : '';
+
+        var iconClass = 'fa-shield-halved';
         if (currentCertCategory === 'komdigi') iconClass = 'fa-building';
         if (currentCertCategory === 'bisaai') iconClass = 'fa-robot';
-        
-        html += `
-            <div class="certificate-card" id="cert-${currentCertCategory}-${key}">
-                ${adminActions}
-                <div class="certificate-icon">
-                    <i class="fas ${iconClass}"></i>
-                </div>
-                <div class="certificate-content">
-                    <h3>${cert.name}</h3>
-                    <p class="cert-issuer">${currentCertCategory === 'cisco' ? 'Cisco Networking Academy' : currentCertCategory === 'komdigi' ? 'Kementerian Komdigi' : 'Bisa AI Academy'}</p>
-                    <span class="cert-year">2026</span>
-                    <div class="cert-actions">
-                        <button class="btn-view-cert" onclick="viewCertificate('${currentCertCategory}', '${key}')">
-                            <i class="fas fa-eye"></i> Lihat Sertifikat
-                        </button>
-                        ${linkHtml}
-                    </div>
-                    <div class="cert-badge-container" id="badge-${currentCertCategory}-${key}">
-                        ${badgeHtml}
-                    </div>
-                </div>
-            </div>
-        `;
+
+        var issuerName = '';
+        if (currentCertCategory === 'cisco') issuerName = 'Cisco Networking Academy';
+        else if (currentCertCategory === 'komdigi') issuerName = 'Kementerian Komdigi';
+        else issuerName = 'Bisa AI Academy';
+
+        html +=
+            '<div class="certificate-card" id="cert-' + escapeHTML(currentCertCategory) + '-' + escapeHTML(key) + '" role="listitem">' +
+            adminActions +
+            '<div class="certificate-icon"><i class="fas ' + iconClass + '" aria-hidden="true"></i></div>' +
+            '<div class="certificate-content">' +
+            '<h3>' + escapeHTML(cert.name) + '</h3>' +
+            '<p class="cert-issuer">' + escapeHTML(issuerName) + '</p>' +
+            '<span class="cert-year">' + escapeHTML(certYear) + '</span>' +
+            '<div class="cert-actions">' +
+            '<button class="btn-view-cert" onclick="viewCertificate(\'' + escapeHTML(currentCertCategory) + '\', \'' + escapeHTML(key) + '\')">' +
+            '<i class="fas fa-eye" aria-hidden="true"></i> Lihat Sertifikat</button>' +
+            linkHtml +
+            '</div>' +
+            '<div class="cert-badge-container">' + badgeHtml + '</div>' +
+            '</div></div>';
     }
-    
+
     grid.innerHTML = html;
-    if (totalSpan) totalSpan.innerText = Object.keys(certs).length.toString();
-    if (hoursSpan) hoursSpan.innerText = totalHours + '+';
+    if (totalSpan) totalSpan.textContent = Object.keys(certs).length.toString();
+    if (hoursSpan) hoursSpan.textContent = totalHours + '+';
 }
 
-window.viewCertificate = function(category, key) {
-    const modal = document.getElementById('certModal');
-    const modalTitle = document.getElementById('modalTitle');
-    const modalBody = document.getElementById('modalBody');
-    
-    const cert = certLinks[category][key];
+window.viewCertificate = function (category, key) {
+    var modal = document.getElementById('certModal');
+    var modalTitle = document.getElementById('modalTitle');
+    var modalBody = document.getElementById('modalBody');
+
+    var cert = certLinks[category][key];
     if (!cert) return;
-    
-    let issuer = '';
+
+    var issuer = '';
     if (category === 'cisco') issuer = 'Cisco Networking Academy';
     else if (category === 'komdigi') issuer = 'Kementerian Komdigi';
     else issuer = 'Bisa AI Academy';
-    
+
     modalTitle.textContent = cert.name;
-    currentCert = { category, key };
-    
-    let content = '';
+    currentCert = { category: category, key: key };
+
+    var content = '';
     if (cert.link) {
         if (cert.link.toLowerCase().includes('.pdf') || cert.link.includes('drive.google') || cert.link.includes('docs.google')) {
-            let src = cert.link;
+            var src = cert.link;
             if (cert.link.includes('drive.google.com')) {
-                const fileId = cert.link.match(/[-\w]{25,}/);
+                var fileId = cert.link.match(/[-\w]{25,}/);
                 if (fileId) {
-                    src = `https://drive.google.com/file/d/${fileId[0]}/preview`;
+                    src = 'https://drive.google.com/file/d/' + fileId[0] + '/preview';
                 }
             }
-            content = `
-                <div class="certificate-viewer">
-                    <iframe src="${src}" width="100%" height="500px" style="border: none; border-radius: 10px;"></iframe>
-                    <p style="margin-top: 20px;">
-                        <a href="${cert.link}" target="_blank" class="btn-view-cert" style="display: inline-block;">
-                            <i class="fas fa-external-link-alt"></i> Buka di Tab Baru
-                        </a>
-                    </p>
-                </div>
-            `;
+            content =
+                '<div class="certificate-viewer">' +
+                '<iframe src="' + escapeHTML(src) + '" width="100%" height="500px" title="Preview sertifikat ' + escapeHTML(cert.name) + '"></iframe>' +
+                '<p style="margin-top: 20px;">' +
+                '<a href="' + escapeHTML(cert.link) + '" target="_blank" rel="noopener noreferrer" class="btn-view-cert" style="display: inline-block; text-decoration: none;">' +
+                '<i class="fas fa-external-link-alt" aria-hidden="true"></i> Buka di Tab Baru</a></p></div>';
         } else {
-            content = `
-                <div class="certificate-viewer">
-                    <img src="${cert.link}" alt="${cert.name}" style="max-width: 100%; border-radius: 10px; box-shadow: var(--shadow);">
-                    <p style="margin-top: 20px;">
-                        <a href="${cert.link}" target="_blank" class="btn-view-cert" style="display: inline-block;">
-                            <i class="fas fa-external-link-alt"></i> Buka Gambar Fullscreen
-                        </a>
-                    </p>
-                </div>
-            `;
+            content =
+                '<div class="certificate-viewer">' +
+                '<img src="' + escapeHTML(cert.link) + '" alt="Sertifikat ' + escapeHTML(cert.name) + '" style="max-width: 100%; border-radius: 10px; box-shadow: var(--shadow);" loading="lazy">' +
+                '<p style="margin-top: 20px;">' +
+                '<a href="' + escapeHTML(cert.link) + '" target="_blank" rel="noopener noreferrer" class="btn-view-cert" style="display: inline-block; text-decoration: none;">' +
+                '<i class="fas fa-external-link-alt" aria-hidden="true"></i> Buka Gambar Fullscreen</a></p></div>';
         }
     } else {
-        content = `
-            <div class="certificate-placeholder">
-                <i class="fas fa-clock"></i>
-                <h4>COMING SOON</h4>
-                <div style="margin: 30px 0;">
-                    <span style="font-size: 4rem;">⏳</span>
-                </div>
-                <p style="font-size: 1.3rem; margin: 20px 0;">${cert.name}</p>
-                <p style="font-size: 1rem; color: var(--text-secondary);">${issuer}</p>
-                <p style="margin-top: 20px; font-style: italic;">Sertifikat akan segera tersedia</p>
-            </div>
-        `;
+        content =
+            '<div class="certificate-placeholder">' +
+            '<i class="fas fa-clock" aria-hidden="true"></i>' +
+            '<h4>COMING SOON</h4>' +
+            '<div style="margin: 30px 0;"><span style="font-size: 4rem;" aria-hidden="true">&#9203;</span></div>' +
+            '<p style="font-size: 1.3rem; margin: 20px 0;">' + escapeHTML(cert.name) + '</p>' +
+            '<p style="font-size: 1rem; color: var(--text-secondary);">' + escapeHTML(issuer) + '</p>' +
+            '<p style="margin-top: 20px; font-style: italic;">Sertifikat akan segera tersedia</p></div>';
     }
-    
+
     modalBody.innerHTML = content;
     modal.style.display = 'block';
     document.body.style.overflow = 'hidden';
-}
+    trapFocus(modal);
+};
 
-window.closeModal = function() {
-    const modal = document.getElementById('certModal');
+window.closeModal = function () {
+    var modal = document.getElementById('certModal');
     modal.style.display = 'none';
     document.body.style.overflow = 'auto';
-}
+};
 
-window.editCertificate = function(category, key) {
+window.editCertificate = function (category, key) {
     if (!isLoggedIn) {
         showToast('Anda harus login terlebih dahulu!', 'error');
         openLoginModal();
         return;
     }
-    
+
     document.getElementById('certCategory').value = category;
     updateCertCategorySelect();
-    
-    setTimeout(() => {
+
+    setTimeout(function () {
         document.getElementById('certSelect').value = key;
     }, 100);
-    
-    const cert = certLinks[category][key];
+
+    var cert = certLinks[category][key];
     if (cert.link) document.getElementById('certLink').value = cert.link;
     if (cert.badge) {
         document.getElementById('certImage').value = cert.badge;
-        document.getElementById('certBadgePreview').innerHTML = `<img src="${cert.badge}" alt="Preview" class="image-preview">`;
+        document.getElementById('certBadgePreview').innerHTML =
+            '<img src="' + escapeHTML(cert.badge) + '" alt="Preview" class="image-preview" onerror="this.style.display=\'none\'">';
     }
-    
-    showAdminPanel();
-}
 
-window.saveCertificateLink = function() {
+    showAdminPanel();
+};
+
+window.saveCertificateLink = function () {
     if (!isLoggedIn) {
         showToast('Anda harus login terlebih dahulu!', 'error');
         openLoginModal();
         return;
     }
-    
-    const category = document.getElementById('certCategory').value;
-    const certSelect = document.getElementById('certSelect');
-    const certLink = document.getElementById('certLink');
-    const certImage = document.getElementById('certImage');
-    
-    const selectedCert = certSelect.value;
-    const linkValue = certLink.value.trim();
-    const imageValue = certImage.value.trim();
-    
+
+    var category = document.getElementById('certCategory').value;
+    var certSelect = document.getElementById('certSelect');
+    var certLink = document.getElementById('certLink');
+    var certImage = document.getElementById('certImage');
+
+    var selectedCert = certSelect.value;
+    var linkValue = certLink.value.trim();
+    var imageValue = certImage.value.trim();
+
     if (selectedCert && certLinks[category] && certLinks[category][selectedCert]) {
         certLinks[category][selectedCert].link = linkValue;
         certLinks[category][selectedCert].badge = imageValue;
+        certLinks[category][selectedCert].year = new Date().getFullYear().toString();
         saveCertLinks();
-        
+
         if (currentCertCategory === category) {
             renderCertificates();
         }
-        
+
         certLink.value = '';
         certImage.value = '';
         document.getElementById('certBadgePreview').innerHTML = '';
         showToast('Link sertifikat berhasil disimpan!', 'success');
     }
-}
+};
 
-window.downloadCertificate = function() {
+window.downloadCertificate = function () {
     if (currentCert && currentCert.category && currentCert.key) {
-        const cert = certLinks[currentCert.category][currentCert.key];
+        var cert = certLinks[currentCert.category][currentCert.key];
         if (cert && cert.link) {
-            window.open(cert.link, '_blank');
+            var a = document.createElement('a');
+            a.href = cert.link;
+            a.target = '_blank';
+            a.rel = 'noopener noreferrer';
+            a.download = cert.name + '_Certificate';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
         } else {
             showToast('File sertifikat belum tersedia!', 'warning');
         }
     } else {
         showToast('File sertifikat belum tersedia!', 'warning');
     }
-}
+};
 
-window.previewBadgeImage = function(url) {
-    const preview = document.getElementById('certBadgePreview');
+window.previewBadgeImage = function (url) {
+    var preview = document.getElementById('certBadgePreview');
     if (!preview) return;
     if (url) {
-        preview.innerHTML = `<img src="${url}" alt="Preview" class="image-preview" onerror="this.style.display='none'">`;
+        preview.innerHTML = '<img src="' + escapeHTML(url) + '" alt="Preview" class="image-preview" onerror="this.style.display=\'none\'">';
     } else {
         preview.innerHTML = '';
     }
-}
+};
 
-window.onclick = function(event) {
-    const modal = document.getElementById('certModal');
-    if (modal && event.target === modal) {
-        closeModal();
-    }
-    
-    const confirmModal = document.getElementById('confirmModal');
-    if (confirmModal && event.target === confirmModal) {
-        closeConfirmModal();
-    }
-}
-
-document.addEventListener('keydown', function(event) {
-    if (event.key === 'Escape') {
-        closeModal();
-        closeConfirmModal();
-    }
-});
-
-window.addEventListener('popstate', function() {
-    const hash = window.location.hash.substring(1);
-    if (hash && document.getElementById(hash)) {
-        showSection(hash);
-    } else {
-        showSection('home');
-    }
-});
-
-const PORTFOLIO_ADMIN_USERNAME = "WalDevelop";
-const PORTFOLIO_ADMIN_PASSWORD = "kartika";
-let isPortfolioLoggedIn = false;
-let portfolioItems = [];
-let currentPage = 1;
-let itemsPerPage = 6;
-let deleteId = null;
-let currentFilter = 'all';
-let currentSearch = '';
-let currentSort = 'newest';
-
+/* ─── Portfolio ─── */
 function loadPortfolioItems() {
-    const saved = localStorage.getItem('portfolioItems');
+    var saved = localStorage.getItem('portfolioItems');
     if (saved) {
-        portfolioItems = JSON.parse(saved);
+        try {
+            portfolioItems = JSON.parse(saved);
+        } catch (e) {
+            portfolioItems = [];
+        }
     } else {
         portfolioItems = [
             {
-                id: '1',
-                category: 'individu',
-                title: 'Project Web CV',
+                id: '1', category: 'individu', title: 'Project Web CV',
                 description: 'Membangun website CV interaktif',
                 image: 'https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=500&auto=format',
                 link: 'https://github.com/waldevelop-afk/web-cv',
                 createdAt: Date.now() - 3000000
             },
             {
-                id: '2',
-                category: 'individu',
-                title: 'Game QuickMath',
+                id: '2', category: 'individu', title: 'Game QuickMath',
                 description: 'Game hitung cepat JavaScript',
                 image: 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=500&auto=format',
                 link: 'https://github.com/waldevelop-afk/quickmath-game',
                 createdAt: Date.now() - 2000000
             },
             {
-                id: '3',
-                category: 'individu',
-                title: 'UI Design Challenge',
+                id: '3', category: 'individu', title: 'UI Design Challenge',
                 description: 'Mendesain tampilan aplikasi mobile',
                 image: 'https://images.unsplash.com/photo-1581291518633-83b4ebd1d83e?w=500&auto=format',
                 link: 'https://github.com/waldevelop-afk/ui-design-challenge',
                 createdAt: Date.now() - 1000000
             },
             {
-                id: '4',
-                category: 'organisasi',
-                title: 'Panitia Seminar Teknologi',
+                id: '4', category: 'organisasi', title: 'Panitia Seminar Teknologi',
                 description: 'Menjadi koordinator acara seminar AI 2025',
                 image: 'https://images.unsplash.com/photo-1540575467069-4f5f2d6f4b9a?w=500&auto=format',
                 link: '',
                 createdAt: Date.now() - 4000000
             },
             {
-                id: '5',
-                category: 'organisasi',
-                title: 'Himpunan Mahasiswa',
+                id: '5', category: 'organisasi', title: 'Himpunan Mahasiswa',
                 description: 'Anggota divisi pengembangan teknologi',
                 image: 'https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=500&auto=format',
                 link: '',
@@ -657,162 +702,165 @@ function savePortfolioItems() {
 }
 
 function filterAndSortItems() {
-    let filtered = [...portfolioItems];
-    
+    var filtered = portfolioItems.slice();
+
     if (currentFilter !== 'all') {
-        filtered = filtered.filter(item => item.category === currentFilter);
+        filtered = filtered.filter(function (item) { return item.category === currentFilter; });
     }
-    
+
     if (currentSearch) {
-        filtered = filtered.filter(item => 
-            item.title.toLowerCase().includes(currentSearch.toLowerCase()) || 
-            item.description.toLowerCase().includes(currentSearch.toLowerCase())
-        );
+        var searchLower = currentSearch.toLowerCase();
+        filtered = filtered.filter(function (item) {
+            return item.title.toLowerCase().includes(searchLower) ||
+                   item.description.toLowerCase().includes(searchLower);
+        });
     }
-    
-    switch(currentSort) {
+
+    switch (currentSort) {
         case 'newest':
-            filtered.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+            filtered.sort(function (a, b) { return (b.createdAt || 0) - (a.createdAt || 0); });
             break;
         case 'oldest':
-            filtered.sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
+            filtered.sort(function (a, b) { return (a.createdAt || 0) - (b.createdAt || 0); });
             break;
         case 'az':
-            filtered.sort((a, b) => a.title.localeCompare(b.title));
+            filtered.sort(function (a, b) { return a.title.localeCompare(b.title); });
             break;
         case 'za':
-            filtered.sort((a, b) => b.title.localeCompare(a.title));
+            filtered.sort(function (a, b) { return b.title.localeCompare(a.title); });
             break;
     }
-    
+
     return filtered;
 }
 
 function renderPortfolioItems() {
-    const grid = document.getElementById('portfolioGrid');
-    const stats = document.getElementById('portfolioStats');
-    const pagination = document.getElementById('portfolioPagination');
+    var grid = document.getElementById('portfolioGrid');
+    var stats = document.getElementById('portfolioStats');
+    var pagination = document.getElementById('portfolioPagination');
     if (!grid) return;
-    
-    const filtered = filterAndSortItems();
-    const totalItems = filtered.length;
-    const totalPages = Math.ceil(totalItems / itemsPerPage);
-    
+
+    var filtered = filterAndSortItems();
+    var totalItems = filtered.length;
+    var totalPages = Math.ceil(totalItems / itemsPerPage);
+
     if (currentPage > totalPages && totalPages > 0) {
         currentPage = totalPages;
     }
-    
-    const start = (currentPage - 1) * itemsPerPage;
-    const end = start + itemsPerPage;
-    const paginatedItems = filtered.slice(start, end);
-    
+
+    var start = (currentPage - 1) * itemsPerPage;
+    var end = start + itemsPerPage;
+    var paginatedItems = filtered.slice(start, end);
+
     if (stats) {
-        const filterText = currentFilter === 'all' ? 'semua' : currentFilter;
-        stats.innerHTML = `Menampilkan <span>${paginatedItems.length}</span> dari <span>${totalItems}</span> portfolio (${filterText})`;
+        var filterText = currentFilter === 'all' ? 'semua' : currentFilter;
+        stats.innerHTML =
+            'Menampilkan <span>' + paginatedItems.length + '</span> dari <span>' +
+            totalItems + '</span> portfolio (' + escapeHTML(filterText) + ')';
     }
-    
+
     if (totalItems === 0) {
-        grid.innerHTML = `
-            <div class="empty-portfolio">
-                <i class="fas fa-images"></i>
-                <h3>Tidak ada portfolio</h3>
-                <p>${isPortfolioLoggedIn ? 'Klik "Tambah Portfolio" untuk menambahkan kegiatan' : 'Tidak ada portfolio yang ditemukan'}</p>
-            </div>
-        `;
+        grid.innerHTML =
+            '<div class="empty-portfolio" role="listitem">' +
+            '<i class="fas fa-images" aria-hidden="true"></i>' +
+            '<h3>Tidak ada portfolio</h3>' +
+            '<p>' + (isPortfolioLoggedIn ? 'Klik "Tambah Portfolio" untuk menambahkan kegiatan' : 'Tidak ada portfolio yang ditemukan') + '</p>' +
+            '</div>';
         if (pagination) pagination.innerHTML = '';
         return;
     }
-    
-    let html = '';
-    paginatedItems.forEach(item => {
-        const linkHtml = item.link ? 
-            `<a href="${item.link}" target="_blank" class="github-link"><i class="fab fa-github"></i> Lihat Repository</a>` : 
-            '';
-        
-        const adminActions = isPortfolioLoggedIn ? `
-            <div class="portfolio-item-actions">
-                <button onclick="editPortfolioItem('${item.id}')" class="btn-edit-portfolio" title="Edit">
-                    <i class="fas fa-edit"></i>
-                </button>
-                <button onclick="showDeleteConfirm('${item.id}')" class="btn-delete-portfolio" title="Hapus">
-                    <i class="fas fa-trash"></i>
-                </button>
-            </div>
-        ` : '';
-        
-        html += `
-            <div class="portfolio-item" data-category="${item.category}" data-id="${item.id}">
-                ${adminActions}
-                <div class="portfolio-image">
-                    <img src="${item.image}" alt="${item.title}" onerror="this.src='https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=500&auto=format'">
-                    <div class="portfolio-overlay">
-                        <h3>${item.title}</h3>
-                        <p>${item.description}</p>
-                        ${linkHtml}
-                    </div>
-                </div>
-            </div>
-        `;
+
+    var html = '';
+    paginatedItems.forEach(function (item) {
+        var linkHtml = item.link
+            ? '<a href="' + escapeHTML(item.link) + '" target="_blank" rel="noopener noreferrer" class="github-link"><i class="fab fa-github" aria-hidden="true"></i> Lihat Repository</a>'
+            : '';
+
+        var adminActions = isPortfolioLoggedIn
+            ? '<div class="portfolio-item-actions">' +
+              '<button onclick="editPortfolioItem(\'' + escapeHTML(item.id) + '\')" class="btn-edit-portfolio" title="Edit" aria-label="Edit ' + escapeHTML(item.title) + '">' +
+              '<i class="fas fa-edit" aria-hidden="true"></i></button>' +
+              '<button onclick="showDeleteConfirm(\'' + escapeHTML(item.id) + '\')" class="btn-delete-portfolio" title="Hapus" aria-label="Hapus ' + escapeHTML(item.title) + '">' +
+              '<i class="fas fa-trash" aria-hidden="true"></i></button></div>'
+            : '';
+
+        html +=
+            '<div class="portfolio-item" data-category="' + escapeHTML(item.category) + '" data-id="' + escapeHTML(item.id) + '" role="listitem">' +
+            adminActions +
+            '<div class="portfolio-image">' +
+            '<img src="' + escapeHTML(item.image) + '" alt="' + escapeHTML(item.title) + '" loading="lazy" onerror="this.src=\'https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=500&auto=format\'">' +
+            '<div class="portfolio-overlay">' +
+            '<h3>' + escapeHTML(item.title) + '</h3>' +
+            '<p>' + escapeHTML(item.description) + '</p>' +
+            linkHtml +
+            '</div></div></div>';
     });
-    
+
     grid.innerHTML = html;
-    
+
     if (pagination) {
         renderPagination(totalPages);
     }
 }
 
 function renderPagination(totalPages) {
-    const pagination = document.getElementById('portfolioPagination');
+    var pagination = document.getElementById('portfolioPagination');
     if (!pagination) return;
-    
+
     if (totalPages <= 1) {
         pagination.innerHTML = '';
         return;
     }
-    
-    let html = '';
-    
-    html += `<button class="pagination-btn" onclick="changePage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>«</button>`;
-    
-    for (let i = 1; i <= totalPages; i++) {
+
+    var html = '';
+
+    html += '<button class="pagination-btn" onclick="changePage(' + (currentPage - 1) + ')"' +
+            (currentPage === 1 ? ' disabled' : '') + ' aria-label="Halaman sebelumnya">&laquo;</button>';
+
+    for (var i = 1; i <= totalPages; i++) {
         if (i === 1 || i === totalPages || (i >= currentPage - 2 && i <= currentPage + 2)) {
-            html += `<button class="pagination-btn ${i === currentPage ? 'active' : ''}" onclick="changePage(${i})">${i}</button>`;
+            html += '<button class="pagination-btn' + (i === currentPage ? ' active' : '') +
+                    '" onclick="changePage(' + i + ')"' +
+                    (i === currentPage ? ' aria-current="page"' : '') + '>' + i + '</button>';
         } else if (i === currentPage - 3 || i === currentPage + 3) {
-            html += `<button class="pagination-btn" disabled>...</button>`;
+            html += '<button class="pagination-btn" disabled aria-hidden="true">...</button>';
         }
     }
-    
-    html += `<button class="pagination-btn" onclick="changePage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''}>»</button>`;
-    
+
+    html += '<button class="pagination-btn" onclick="changePage(' + (currentPage + 1) + ')"' +
+            (currentPage === totalPages ? ' disabled' : '') + ' aria-label="Halaman berikutnya">&raquo;</button>';
+
     pagination.innerHTML = html;
 }
 
-window.changePage = function(page) {
-    const filtered = filterAndSortItems();
-    const totalPages = Math.ceil(filtered.length / itemsPerPage);
-    
+window.changePage = function (page) {
+    var filtered = filterAndSortItems();
+    var totalPages = Math.ceil(filtered.length / itemsPerPage);
+
     if (page < 1 || page > totalPages) return;
-    
+
     currentPage = page;
     renderPortfolioItems();
-    window.scrollTo({ top: document.getElementById('portfolioGrid').offsetTop - 100, behavior: 'smooth' });
-}
+    var gridEl = document.getElementById('portfolioGrid');
+    if (gridEl) {
+        window.scrollTo({ top: gridEl.offsetTop - 100, behavior: 'smooth' });
+    }
+};
 
 function initSearchAndSort() {
-    const searchInput = document.getElementById('searchPortfolio');
-    const sortSelect = document.getElementById('sortPortfolio');
-    
+    var searchInput = document.getElementById('searchPortfolio');
+    var sortSelect = document.getElementById('sortPortfolio');
+
     if (searchInput) {
-        searchInput.addEventListener('input', function(e) {
+        searchInput.addEventListener('input', function (e) {
             currentSearch = e.target.value;
             currentPage = 1;
             renderPortfolioItems();
         });
     }
-    
+
     if (sortSelect) {
-        sortSelect.addEventListener('change', function(e) {
+        sortSelect.addEventListener('change', function (e) {
             currentSort = e.target.value;
             currentPage = 1;
             renderPortfolioItems();
@@ -821,13 +869,13 @@ function initSearchAndSort() {
 }
 
 function initPortfolioFilters() {
-    const filterBtns = document.querySelectorAll('.filter-btn');
-    
-    filterBtns.forEach(btn => {
-        btn.addEventListener('click', function() {
-            filterBtns.forEach(b => b.classList.remove('active'));
+    var filterBtns = document.querySelectorAll('.filter-btn');
+
+    filterBtns.forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            filterBtns.forEach(function (b) { b.classList.remove('active'); });
             this.classList.add('active');
-            
+
             currentFilter = this.getAttribute('data-filter');
             currentPage = 1;
             renderPortfolioItems();
@@ -835,32 +883,36 @@ function initPortfolioFilters() {
     });
 }
 
-window.openPortfolioLoginModal = function() {
+/* ─── Portfolio Admin Auth ─── */
+window.openPortfolioLoginModal = function () {
     if (isPortfolioLoggedIn) {
         showPortfolioAdminPanel();
     } else {
-        const modal = document.getElementById('portfolioLoginModal');
+        var modal = document.getElementById('portfolioLoginModal');
         modal.style.display = 'block';
         document.body.style.overflow = 'hidden';
-        
+
         document.getElementById('portfolioUsername').value = '';
         document.getElementById('portfolioPassword').value = '';
         document.getElementById('portfolioLoginError').style.display = 'none';
+        trapFocus(modal);
     }
-}
+};
 
-window.closePortfolioLoginModal = function() {
-    const modal = document.getElementById('portfolioLoginModal');
+window.closePortfolioLoginModal = function () {
+    var modal = document.getElementById('portfolioLoginModal');
     modal.style.display = 'none';
     document.body.style.overflow = 'auto';
-}
+};
 
-window.handlePortfolioLogin = function() {
-    const username = document.getElementById('portfolioUsername').value;
-    const password = document.getElementById('portfolioPassword').value;
-    const errorElement = document.getElementById('portfolioLoginError');
-    
-    if (username === PORTFOLIO_ADMIN_USERNAME && password === PORTFOLIO_ADMIN_PASSWORD) {
+window.handlePortfolioLogin = async function () {
+    var username = document.getElementById('portfolioUsername').value.trim();
+    var password = document.getElementById('portfolioPassword').value;
+    var errorElement = document.getElementById('portfolioLoginError');
+
+    var isValid = await verifyCredentials(username, password);
+
+    if (isValid) {
         isPortfolioLoggedIn = true;
         localStorage.setItem('portfolioAdminLoggedIn', 'true');
         closePortfolioLoginModal();
@@ -870,59 +922,61 @@ window.handlePortfolioLogin = function() {
         showToast('Login portfolio berhasil! Selamat datang Admin.', 'success');
     } else {
         errorElement.style.display = 'block';
-        document.getElementById('portfolioUsername').style.borderColor = '#F56565';
-        document.getElementById('portfolioPassword').style.borderColor = '#F56565';
+        document.getElementById('portfolioUsername').classList.add('input-error');
+        document.getElementById('portfolioPassword').classList.add('input-error');
     }
-}
+};
 
 function showPortfolioAdminPanel() {
-    const panel = document.getElementById('portfolioAdminPanel');
+    var panel = document.getElementById('portfolioAdminPanel');
     panel.style.display = 'block';
     panel.classList.add('visible');
-    
+
     document.getElementById('portfolioTitle').value = '';
     document.getElementById('portfolioDescription').value = '';
     document.getElementById('portfolioImage').value = '';
     document.getElementById('portfolioLink').value = '';
     document.getElementById('portfolioImagePreview').innerHTML = '';
-    
-    const saveBtn = document.getElementById('portfolioSaveBtn');
-    saveBtn.innerHTML = '<i class="fas fa-plus-circle"></i> Tambah Portfolio';
+
+    var saveBtn = document.getElementById('portfolioSaveBtn');
+    saveBtn.innerHTML = '<i class="fas fa-plus-circle" aria-hidden="true"></i> Tambah Portfolio';
     saveBtn.onclick = addPortfolioItem;
+
+    updateCharCounter('portfolioDescription', 'portfolioDescCount', 500);
 }
 
-window.closePortfolioAdminPanel = function() {
-    const panel = document.getElementById('portfolioAdminPanel');
+window.closePortfolioAdminPanel = function () {
+    var panel = document.getElementById('portfolioAdminPanel');
     panel.style.display = 'none';
     panel.classList.remove('visible');
-}
+};
 
-window.logoutPortfolioAdmin = function() {
+window.logoutPortfolioAdmin = function () {
     isPortfolioLoggedIn = false;
     localStorage.removeItem('portfolioAdminLoggedIn');
     closePortfolioAdminPanel();
     updatePortfolioAdminButton();
     renderPortfolioItems();
     showToast('Logout portfolio berhasil!', 'info');
-}
+};
 
 function updatePortfolioAdminButton() {
-    const adminBtn = document.getElementById('portfolioAdminLoginBtn');
-    const adminStatus = document.getElementById('portfolioAdminStatus');
-    
+    var adminBtn = document.getElementById('portfolioAdminLoginBtn');
+    var adminStatus = document.getElementById('portfolioAdminStatus');
+
     if (isPortfolioLoggedIn) {
-        adminBtn.innerHTML = '<i class="fas fa-user-shield"></i> Portfolio Admin (Active)';
-        adminStatus.innerHTML = 'Anda sudah login sebagai admin portfolio';
-        adminStatus.style.color = '#48BB78';
+        adminBtn.innerHTML = '<i class="fas fa-user-shield" aria-hidden="true"></i> Portfolio Admin (Active)';
+        adminStatus.textContent = 'Anda sudah login sebagai admin portfolio';
+        adminStatus.style.color = '#10B981';
     } else {
-        adminBtn.innerHTML = '<i class="fas fa-lock"></i> Portfolio Admin Login';
-        adminStatus.innerHTML = 'Klik untuk login sebagai admin portfolio';
-        adminStatus.style.color = 'var(--text-secondary)';
+        adminBtn.innerHTML = '<i class="fas fa-lock" aria-hidden="true"></i> Portfolio Admin Login';
+        adminStatus.textContent = 'Klik untuk login sebagai admin portfolio';
+        adminStatus.style.color = '';
     }
 }
 
 function checkPortfolioLoginStatus() {
-    const savedStatus = localStorage.getItem('portfolioAdminLoggedIn');
+    var savedStatus = localStorage.getItem('portfolioAdminLoggedIn');
     if (savedStatus === 'true') {
         isPortfolioLoggedIn = true;
         showPortfolioAdminPanel();
@@ -930,87 +984,116 @@ function checkPortfolioLoginStatus() {
     }
 }
 
-window.previewPortfolioImage = function(url) {
-    const preview = document.getElementById('portfolioImagePreview');
+window.previewPortfolioImage = function (url) {
+    var preview = document.getElementById('portfolioImagePreview');
     if (url) {
-        preview.innerHTML = `<img src="${url}" alt="Preview" class="image-preview" onerror="this.style.display='none'">`;
+        preview.innerHTML = '<img src="' + escapeHTML(url) + '" alt="Preview" class="image-preview" onerror="this.style.display=\'none\'">';
     } else {
         preview.innerHTML = '';
     }
-}
+};
 
 function isValidImageUrl(url) {
     if (!url) return false;
-    return url.match(/\.(jpeg|jpg|gif|png|webp|svg)$/i) || 
-           url.includes('images.unsplash.com') || 
+    return url.match(/\.(jpeg|jpg|gif|png|webp|svg)(\?.*)?$/i) ||
+           url.includes('images.unsplash.com') ||
            url.includes('ibb.co') ||
            url.includes('cloudinary.com') ||
-           url.includes('googleusercontent.com');
+           url.includes('googleusercontent.com') ||
+           url.includes('picsum.photos') ||
+           url.includes('placehold.co');
 }
 
-window.addPortfolioItem = function() {
+window.addPortfolioItem = function () {
     if (!isPortfolioLoggedIn) {
         showToast('Anda harus login terlebih dahulu!', 'error');
         openPortfolioLoginModal();
         return;
     }
-    
-    const category = document.getElementById('portfolioCategory').value;
-    const title = document.getElementById('portfolioTitle').value.trim();
-    const description = document.getElementById('portfolioDescription').value.trim();
-    const image = document.getElementById('portfolioImage').value.trim();
-    const link = document.getElementById('portfolioLink').value.trim();
-    
-    if (!title || !description || !image) {
+
+    var category = document.getElementById('portfolioCategory').value;
+    var title = document.getElementById('portfolioTitle').value.trim();
+    var description = document.getElementById('portfolioDescription').value.trim();
+    var image = document.getElementById('portfolioImage').value.trim();
+    var link = document.getElementById('portfolioLink').value.trim();
+
+    clearFieldErrors();
+
+    var hasError = false;
+    if (!title) { markFieldError('portfolioTitle'); hasError = true; }
+    if (!description) { markFieldError('portfolioDescription'); hasError = true; }
+    if (!image) { markFieldError('portfolioImage'); hasError = true; }
+
+    if (hasError) {
         showToast('Judul, deskripsi, dan gambar harus diisi!', 'error');
         return;
     }
-    
+
     if (!isValidImageUrl(image)) {
+        markFieldError('portfolioImage');
         showToast('Link gambar tidak valid! Gunakan link gambar yang benar.', 'error');
         return;
     }
-    
-    const newItem = {
+
+    if (link && !link.match(/^https?:\/\/.+/i)) {
+        markFieldError('portfolioLink');
+        showToast('Link repository harus berupa URL yang valid!', 'error');
+        return;
+    }
+
+    var newItem = {
         id: Date.now().toString(),
-        category,
-        title,
-        description,
-        image,
+        category: category,
+        title: title,
+        description: description,
+        image: image,
         link: link || '',
         createdAt: Date.now()
     };
-    
+
     portfolioItems.push(newItem);
     savePortfolioItems();
     currentPage = 1;
     renderPortfolioItems();
-    
+
     document.getElementById('portfolioTitle').value = '';
     document.getElementById('portfolioDescription').value = '';
     document.getElementById('portfolioImage').value = '';
     document.getElementById('portfolioLink').value = '';
     document.getElementById('portfolioImagePreview').innerHTML = '';
-    
+    updateCharCounter('portfolioDescription', 'portfolioDescCount', 500);
+
     showToast('Portfolio berhasil ditambahkan!', 'success');
+};
+
+function markFieldError(fieldId) {
+    var field = document.getElementById(fieldId);
+    if (field) field.classList.add('input-error');
 }
 
-window.showDeleteConfirm = function(id) {
+function clearFieldErrors() {
+    document.querySelectorAll('.input-error').forEach(function (el) {
+        el.classList.remove('input-error');
+    });
+}
+
+window.showDeleteConfirm = function (id) {
     deleteId = id;
-    const modal = document.getElementById('confirmModal');
-    document.getElementById('confirmMessage').innerText = 'Apakah Anda yakin ingin menghapus item ini?';
+    var modal = document.getElementById('confirmModal');
+    document.getElementById('confirmMessage').textContent = 'Apakah Anda yakin ingin menghapus item ini?';
     modal.style.display = 'block';
     document.body.style.overflow = 'hidden';
-}
+    trapFocus(modal);
+};
 
-window.closeConfirmModal = function() {
-    const modal = document.getElementById('confirmModal');
+window.closeConfirmModal = function () {
+    var modal = document.getElementById('confirmModal');
     modal.style.display = 'none';
     document.body.style.overflow = 'auto';
     deleteId = null;
-}
+};
 
-window.confirmAction = function() {
+window.confirmAction = function () {
     if (deleteId) {
         if (!isPortfolioLoggedIn) {
             showToast('Anda harus login terlebih dahulu!', 'error');
@@ -1018,177 +1101,315 @@ window.confirmAction = function() {
             closeConfirmModal();
             return;
         }
-        
-        portfolioItems = portfolioItems.filter(item => item.id !== deleteId);
+
+        portfolioItems = portfolioItems.filter(function (item) { return item.id !== deleteId; });
         savePortfolioItems();
         renderPortfolioItems();
         showToast('Portfolio berhasil dihapus!', 'success');
         closeConfirmModal();
     }
-}
+};
 
-window.editPortfolioItem = function(id) {
+window.editPortfolioItem = function (id) {
     if (!isPortfolioLoggedIn) {
         showToast('Anda harus login terlebih dahulu!', 'error');
         openPortfolioLoginModal();
         return;
     }
-    
-    const item = portfolioItems.find(item => item.id === id);
+
+    var item = portfolioItems.find(function (i) { return i.id === id; });
     if (!item) return;
-    
+
     document.getElementById('portfolioCategory').value = item.category;
     document.getElementById('portfolioTitle').value = item.title;
     document.getElementById('portfolioDescription').value = item.description;
     document.getElementById('portfolioImage').value = item.image;
     document.getElementById('portfolioLink').value = item.link || '';
-    
-    if (item.image) {
-        document.getElementById('portfolioImagePreview').innerHTML = `<img src="${item.image}" alt="Preview" class="image-preview">`;
-    }
-    
-    const saveBtn = document.getElementById('portfolioSaveBtn');
-    saveBtn.innerHTML = '<i class="fas fa-sync-alt"></i> Update Portfolio';
-    saveBtn.onclick = function() { updatePortfolioItem(id); };
-    
-    showPortfolioAdminPanel();
-}
 
-window.updatePortfolioItem = function(id) {
+    if (item.image) {
+        document.getElementById('portfolioImagePreview').innerHTML =
+            '<img src="' + escapeHTML(item.image) + '" alt="Preview" class="image-preview" onerror="this.style.display=\'none\'">';
+    }
+
+    updateCharCounter('portfolioDescription', 'portfolioDescCount', 500);
+
+    var saveBtn = document.getElementById('portfolioSaveBtn');
+    saveBtn.innerHTML = '<i class="fas fa-sync-alt" aria-hidden="true"></i> Update Portfolio';
+    saveBtn.onclick = function () { updatePortfolioItem(id); };
+
+    showPortfolioAdminPanel();
+};
+
+window.updatePortfolioItem = function (id) {
     if (!isPortfolioLoggedIn) return;
-    
-    const category = document.getElementById('portfolioCategory').value;
-    const title = document.getElementById('portfolioTitle').value.trim();
-    const description = document.getElementById('portfolioDescription').value.trim();
-    const image = document.getElementById('portfolioImage').value.trim();
-    const link = document.getElementById('portfolioLink').value.trim();
-    
-    if (!title || !description || !image) {
+
+    var category = document.getElementById('portfolioCategory').value;
+    var title = document.getElementById('portfolioTitle').value.trim();
+    var description = document.getElementById('portfolioDescription').value.trim();
+    var image = document.getElementById('portfolioImage').value.trim();
+    var link = document.getElementById('portfolioLink').value.trim();
+
+    clearFieldErrors();
+
+    var hasError = false;
+    if (!title) { markFieldError('portfolioTitle'); hasError = true; }
+    if (!description) { markFieldError('portfolioDescription'); hasError = true; }
+    if (!image) { markFieldError('portfolioImage'); hasError = true; }
+
+    if (hasError) {
         showToast('Judul, deskripsi, dan gambar harus diisi!', 'error');
         return;
     }
-    
+
     if (!isValidImageUrl(image)) {
-        showToast('Link gambar tidak valid! Gunakan link gambar yang benar.', 'error');
+        markFieldError('portfolioImage');
+        showToast('Link gambar tidak valid!', 'error');
         return;
     }
-    
-    const index = portfolioItems.findIndex(item => item.id === id);
+
+    var index = portfolioItems.findIndex(function (i) { return i.id === id; });
     if (index !== -1) {
         portfolioItems[index] = {
-            ...portfolioItems[index],
-            category,
-            title,
-            description,
-            image,
+            id: portfolioItems[index].id,
+            createdAt: portfolioItems[index].createdAt,
+            category: category,
+            title: title,
+            description: description,
+            image: image,
             link: link || ''
         };
-        
+
         savePortfolioItems();
         renderPortfolioItems();
-        
+
         document.getElementById('portfolioTitle').value = '';
         document.getElementById('portfolioDescription').value = '';
         document.getElementById('portfolioImage').value = '';
         document.getElementById('portfolioLink').value = '';
         document.getElementById('portfolioImagePreview').innerHTML = '';
-        
-        const saveBtn = document.getElementById('portfolioSaveBtn');
-        saveBtn.innerHTML = '<i class="fas fa-plus-circle"></i> Tambah Portfolio';
+        updateCharCounter('portfolioDescription', 'portfolioDescCount', 500);
+
+        var saveBtn = document.getElementById('portfolioSaveBtn');
+        saveBtn.innerHTML = '<i class="fas fa-plus-circle" aria-hidden="true"></i> Tambah Portfolio';
         saveBtn.onclick = addPortfolioItem;
-        
+
         showToast('Portfolio berhasil diupdate!', 'success');
+    }
+};
+
+/* ─── Character Counters ─── */
+function initCharCounters() {
+    var descField = document.getElementById('portfolioDescription');
+    if (descField) {
+        descField.addEventListener('input', function () {
+            updateCharCounter('portfolioDescription', 'portfolioDescCount', 500);
+        });
     }
 }
 
-let currentQuestion = 0;
-let score = 0;
-let timeLeft = 10;
-let timerInterval;
-let gameData = [];
-let currentAnswer = 0;
-let playerName = "";
+function updateCharCounter(fieldId, counterId, max) {
+    var field = document.getElementById(fieldId);
+    var counter = document.getElementById(counterId);
+    if (field && counter) {
+        var len = field.value.length;
+        counter.textContent = len + '/' + max;
+        counter.style.color = len > max * 0.9 ? 'var(--danger)' : '';
+    }
+}
 
+/* ─── Login Enter Key Support ─── */
+function initLoginEnterKeys() {
+    var passwordField = document.getElementById('password');
+    if (passwordField) {
+        passwordField.addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') { e.preventDefault(); handleLogin(); }
+        });
+    }
+
+    var portfolioPasswordField = document.getElementById('portfolioPassword');
+    if (portfolioPasswordField) {
+        portfolioPasswordField.addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') { e.preventDefault(); handlePortfolioLogin(); }
+        });
+    }
+
+    var usernameField = document.getElementById('username');
+    if (usernameField) {
+        usernameField.addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') { e.preventDefault(); document.getElementById('password').focus(); }
+        });
+    }
+
+    var portfolioUsernameField = document.getElementById('portfolioUsername');
+    if (portfolioUsernameField) {
+        portfolioUsernameField.addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') { e.preventDefault(); document.getElementById('portfolioPassword').focus(); }
+        });
+    }
+}
+
+/* ─── Modal Focus Trap ─── */
+function trapFocus(modal) {
+    var focusableSelectors = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
+    var focusableElements = modal.querySelectorAll(focusableSelectors);
+    if (focusableElements.length === 0) return;
+
+    var firstFocusable = focusableElements[0];
+    var lastFocusable = focusableElements[focusableElements.length - 1];
+
+    firstFocusable.focus();
+
+    modal._trapHandler = function (e) {
+        if (e.key !== 'Tab') return;
+
+        if (e.shiftKey) {
+            if (document.activeElement === firstFocusable) {
+                e.preventDefault();
+                lastFocusable.focus();
+            }
+        } else {
+            if (document.activeElement === lastFocusable) {
+                e.preventDefault();
+                firstFocusable.focus();
+            }
+        }
+    };
+
+    modal.addEventListener('keydown', modal._trapHandler);
+}
+
+/* ─── Modal Click Outside ─── */
+function initModalClickOutside() {
+    document.addEventListener('click', function (event) {
+        var certModal = document.getElementById('certModal');
+        if (certModal && event.target === certModal) {
+            closeModal();
+        }
+
+        var confirmModal = document.getElementById('confirmModal');
+        if (confirmModal && event.target === confirmModal) {
+            closeConfirmModal();
+        }
+
+        var loginModal = document.getElementById('loginModal');
+        if (loginModal && event.target === loginModal) {
+            closeLoginModal();
+        }
+
+        var portfolioLoginModal = document.getElementById('portfolioLoginModal');
+        if (portfolioLoginModal && event.target === portfolioLoginModal) {
+            closePortfolioLoginModal();
+        }
+    });
+}
+
+/* ─── Escape Key Handler ─── */
+function initEscapeKey() {
+    document.addEventListener('keydown', function (event) {
+        if (event.key === 'Escape') {
+            closeModal();
+            closeConfirmModal();
+            closeLoginModal();
+            closePortfolioLoginModal();
+        }
+    });
+}
+
+/* ─── Popstate (Browser Back/Forward) ─── */
+function initPopState() {
+    window.addEventListener('popstate', function () {
+        var hash = window.location.hash.substring(1);
+        if (hash && document.getElementById(hash)) {
+            showSection(hash);
+        } else {
+            showSection('home');
+        }
+    });
+}
+
+/* ─── QuickMath Game ─── */
 function initGame() {
-    const startScreen = document.getElementById("start-screen");
-    const loadingScreen = document.getElementById("loading-screen");
-    const playScreen = document.getElementById("play-screen");
-    const resultScreen = document.getElementById("result-screen");
-    const inputField = document.getElementById("answer-input");
-    const progress = document.getElementById("progress");
-    const questNumber = document.getElementById("quest-number");
-    const displayQuestion = document.getElementById("display-question");
-    const loadingPercentage = document.getElementById("loadingPercentage");
-    const playerNameInput = document.getElementById("player-name-input");
-    const nameError = document.getElementById("name-error");
-    const loadingPlayerName = document.getElementById("loading-player-name");
-    const playPlayerName = document.getElementById("play-player-name");
-    const resultPlayerName = document.getElementById("result-player-name");
-    const finalScore = document.getElementById("final-score");
-    const resultMessage = document.getElementById("result-message");
-    const resultTitle = document.getElementById("result-title");
+    var startScreen = document.getElementById('start-screen');
+    var loadingScreen = document.getElementById('loading-screen');
+    var playScreen = document.getElementById('play-screen');
+    var resultScreen = document.getElementById('result-screen');
+    var inputField = document.getElementById('answer-input');
+    var progress = document.getElementById('progress');
+    var questNumber = document.getElementById('quest-number');
+    var displayQuestion = document.getElementById('display-question');
+    var loadingPercentage = document.getElementById('loadingPercentage');
+    var playerNameInput = document.getElementById('player-name-input');
+    var nameError = document.getElementById('name-error');
+    var loadingPlayerName = document.getElementById('loading-player-name');
+    var playPlayerName = document.getElementById('play-player-name');
+    var resultPlayerName = document.getElementById('result-player-name');
+    var finalScore = document.getElementById('final-score');
+    var resultMessage = document.getElementById('result-message');
+    var resultTitle = document.getElementById('result-title');
 
     if (!startScreen || !loadingScreen || !playScreen || !resultScreen) return;
 
     if (inputField) {
-        inputField.addEventListener("keypress", function(e) {
-            if (e.key === "Enter") {
+        inputField.addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
                 processAnswer();
             }
         });
     }
 
-    window.validateAndShowLoading = function() {
-        const name = playerNameInput.value.trim();
-        if (name === "") {
-            nameError.style.display = "block";
-            playerNameInput.style.border = "2px solid #F56565";
+    window.validateAndShowLoading = function () {
+        var name = playerNameInput.value.trim();
+        if (name === '') {
+            nameError.style.display = 'block';
+            playerNameInput.classList.add('input-error');
+            playerNameInput.focus();
             return;
         }
-        nameError.style.display = "none";
-        playerNameInput.style.border = "none";
+        nameError.style.display = 'none';
+        playerNameInput.classList.remove('input-error');
         playerName = name;
         showLoading();
     };
 
-    window.showStartScreen = function() {
-        startScreen.classList.remove("hidden");
-        loadingScreen.classList.add("hidden");
-        playScreen.classList.add("hidden");
-        resultScreen.classList.add("hidden");
-        if (playerNameInput) playerNameInput.value = "";
-        playerName = "";
+    window.showStartScreen = function () {
+        startScreen.classList.remove('hidden');
+        loadingScreen.classList.add('hidden');
+        playScreen.classList.add('hidden');
+        resultScreen.classList.add('hidden');
+        if (playerNameInput) playerNameInput.value = '';
+        playerName = '';
     };
 
     function showLoading() {
-        startScreen.classList.add("hidden");
-        playScreen.classList.add("hidden");
-        resultScreen.classList.add("hidden");
-        loadingScreen.classList.remove("hidden");
-        
+        startScreen.classList.add('hidden');
+        playScreen.classList.add('hidden');
+        resultScreen.classList.add('hidden');
+        loadingScreen.classList.remove('hidden');
+
         if (loadingPlayerName) {
-            loadingPlayerName.innerText = "👤 " + playerName;
+            loadingPlayerName.textContent = playerName;
         }
-        
-        const startButton = document.getElementById("startButton");
+
+        var startButton = document.getElementById('startButton');
         if (startButton) startButton.disabled = true;
-        
-        let percentage = 0;
-        const interval = setInterval(() => {
+
+        var percentage = 0;
+        var interval = setInterval(function () {
             percentage += Math.random() * 15;
             if (percentage >= 100) {
                 percentage = 100;
                 clearInterval(interval);
-                
-                setTimeout(() => {
-                    loadingScreen.classList.add("hidden");
+
+                setTimeout(function () {
+                    loadingScreen.classList.add('hidden');
                     startGame();
                     if (startButton) startButton.disabled = false;
                 }, 500);
             }
-            
+
             if (loadingPercentage) {
-                loadingPercentage.innerText = Math.floor(percentage) + "%";
+                loadingPercentage.textContent = Math.floor(percentage) + '%';
             }
         }, 200);
     }
@@ -1197,35 +1418,35 @@ function initGame() {
         currentQuestion = 0;
         score = 0;
         gameData = [];
-        playScreen.classList.remove("hidden");
+        playScreen.classList.remove('hidden');
         if (playPlayerName) {
-            playPlayerName.innerText = "👤 " + playerName;
+            playPlayerName.textContent = playerName;
         }
         nextQuestion();
     }
 
     function generateQuestion() {
-        const ops = ["+", "-", "*", "/"];
-        let a = Math.floor(Math.random() * 10) + 1;
-        let b = Math.floor(Math.random() * 10) + 1;
-        let op = ops[Math.floor(Math.random() * 4)];
+        var ops = ['+', '-', '*', '/'];
+        var a = Math.floor(Math.random() * 10) + 1;
+        var b = Math.floor(Math.random() * 10) + 1;
+        var op = ops[Math.floor(Math.random() * 4)];
 
-        if (op === "/") {
+        if (op === '/') {
             a = a * b;
         }
 
-        let opDisplay = op;
-        if (op === "*") opDisplay = "×";
-        if (op === "/") opDisplay = "÷";
+        var opDisplay = op;
+        if (op === '*') opDisplay = '\u00d7';
+        if (op === '/') opDisplay = '\u00f7';
 
-        let qText = a + " " + opDisplay + " " + b;
-        let ans = 0;
-        if (op === "+") ans = a + b;
-        else if (op === "-") ans = a - b;
-        else if (op === "*") ans = a * b;
-        else if (op === "/") ans = a / b;
+        var qText = a + ' ' + opDisplay + ' ' + b;
+        var ans = 0;
+        if (op === '+') ans = a + b;
+        else if (op === '-') ans = a - b;
+        else if (op === '*') ans = a * b;
+        else if (op === '/') ans = a / b;
 
-        return { qText, ans };
+        return { qText: qText, ans: ans };
     }
 
     function nextQuestion() {
@@ -1236,16 +1457,16 @@ function initGame() {
 
         currentQuestion++;
         if (questNumber) {
-            questNumber.innerText = 'Soal ' + currentQuestion + ' / 10';
+            questNumber.textContent = 'Soal ' + currentQuestion + ' / 10';
         }
-        const q = generateQuestion();
+        var q = generateQuestion();
         if (displayQuestion) {
-            displayQuestion.innerText = q.qText;
+            displayQuestion.textContent = q.qText;
         }
         currentAnswer = q.ans;
 
         if (inputField) {
-            inputField.value = "";
+            inputField.value = '';
             inputField.focus();
         }
 
@@ -1255,41 +1476,46 @@ function initGame() {
     function startTimer() {
         clearInterval(timerInterval);
         timeLeft = 10;
+
         if (progress) {
-            progress.style.width = "100%";
-            progress.style.transition = "none";
+            progress.style.transition = 'none';
+            progress.style.width = '100%';
             progress.offsetHeight;
-            progress.style.transition = "width 10s linear";
-            progress.style.width = "0%";
+            progress.style.transition = 'width 10s linear';
+            progress.style.width = '0%';
         }
 
-        timerInterval = setInterval(() => {
-            timeLeft--;
-            if (timeLeft < 0) {
+        var startTime = Date.now();
+        timerInterval = setInterval(function () {
+            var elapsed = (Date.now() - startTime) / 1000;
+            timeLeft = Math.max(0, 10 - elapsed);
+
+            if (timeLeft <= 0) {
+                clearInterval(timerInterval);
                 processAnswer(null);
             }
-        }, 1000);
+        }, 100);
     }
 
-    function processAnswer(userValue = undefined) {
+    function processAnswer(userValue) {
         clearInterval(timerInterval);
 
-        let jawaban;
+        var jawaban;
         if (userValue === null) {
             jawaban = null;
         } else {
-            jawaban = parseFloat(inputField ? inputField.value : 0);
+            jawaban = parseFloat(inputField ? inputField.value : '0');
             if (isNaN(jawaban)) jawaban = null;
         }
 
-        const benar = (jawaban === currentAnswer);
+        var benar = (jawaban === currentAnswer);
         if (benar) score++;
 
         gameData.push({
-            soal: displayQuestion ? displayQuestion.innerText : "",
-            jawabanUser: jawaban !== null ? jawaban : "-",
+            soal: displayQuestion ? displayQuestion.textContent : '',
+            jawabanUser: jawaban !== null ? jawaban : '-',
             jawabanBenar: currentAnswer,
-            status: benar ? "benar" : "salah"
+            status: benar ? 'benar' : 'salah'
         });
 
         if (currentQuestion < 10) {
@@ -1300,78 +1526,84 @@ function initGame() {
     }
 
     function createConfetti() {
-        for (let i = 0; i < 50; i++) {
-            const confetti = document.createElement('div');
-            confetti.className = 'confetti';
-            confetti.style.left = Math.random() * 100 + '%';
-            confetti.style.background = `hsl(${Math.random() * 360}, 100%, 50%)`;
-            confetti.style.animationDelay = Math.random() * 3 + 's';
-            confetti.style.animationDuration = Math.random() * 2 + 2 + 's';
-            confetti.style.position = 'fixed';
-            confetti.style.width = '10px';
-            confetti.style.height = '10px';
-            confetti.style.borderRadius = '50%';
-            confetti.style.zIndex = '9999';
-            confetti.style.animation = 'confettiFall 3s ease-in-out infinite';
-            document.body.appendChild(confetti);
-            
-            setTimeout(() => {
-                confetti.remove();
-            }, 5000);
+        var fragment = document.createDocumentFragment();
+        for (var i = 0; i < 50; i++) {
+            var confetti = document.createElement('div');
+            confetti.style.cssText =
+                'position:fixed;width:10px;height:10px;border-radius:50%;z-index:9999;pointer-events:none;' +
+                'left:' + (Math.random() * 100) + '%;' +
+                'background:hsl(' + (Math.random() * 360) + ',100%,50%);' +
+                'animation:confettiFall ' + (Math.random() * 2 + 2) + 's ease-in-out ' + (Math.random() * 3) + 's forwards;';
+            fragment.appendChild(confetti);
         }
+        document.body.appendChild(fragment);
+
+        setTimeout(function () {
+            var confettiElements = document.querySelectorAll('[style*="confettiFall"]');
+            confettiElements.forEach(function (el) { el.remove(); });
+        }, 6000);
     }
 
     function endGame() {
-        playScreen.classList.add("hidden");
-        resultScreen.classList.remove("hidden");
-        
+        playScreen.classList.add('hidden');
+        resultScreen.classList.remove('hidden');
+
         if (resultPlayerName) {
-            resultPlayerName.innerText = "👤 " + playerName;
+            resultPlayerName.textContent = playerName;
         }
-        
-        const totalScore = score;
+
+        var totalScore = score;
         if (finalScore) {
-            finalScore.innerText = "Skor: " + totalScore + " / 10";
+            finalScore.textContent = 'Skor: ' + totalScore + ' / 10';
         }
-        
+
         if (resultTitle) {
             if (totalScore >= 8) {
-                resultTitle.innerText = "🎉 SELAMAT! 🎉";
+                resultTitle.textContent = 'SELAMAT!';
             } else {
-                resultTitle.innerText = "😢 YAHH...";
+                resultTitle.textContent = 'YAH...';
             }
         }
-        
+
         if (resultMessage) {
             if (totalScore >= 8) {
-                resultMessage.innerText = "✨ " + playerName + ", kamu MENANG! Luar biasa! ✨";
-                resultMessage.style.color = "#48BB78";
+                resultMessage.textContent = playerName + ', kamu MENANG! Luar biasa!';
+                resultMessage.style.color = '#10B981';
                 if (finalScore) {
-                    finalScore.classList.add("win-badge");
-                    finalScore.classList.remove("lose-badge");
+                    finalScore.classList.add('win-badge');
+                    finalScore.classList.remove('lose-badge');
                 }
                 createConfetti();
             } else {
-                resultMessage.innerText = playerName + ", kamu KALAH. Coba lagi ya! 💪";
-                resultMessage.style.color = "#F56565";
+                resultMessage.textContent = playerName + ', kamu KALAH. Coba lagi ya!';
+                resultMessage.style.color = '#EF4444';
                 if (finalScore) {
-                    finalScore.classList.add("lose-badge");
-                    finalScore.classList.remove("win-badge");
+                    finalScore.classList.add('lose-badge');
+                    finalScore.classList.remove('win-badge');
                 }
             }
         }
 
-        const tbody = document.getElementById("result-body");
+        var tbody = document.getElementById('result-body');
         if (tbody) {
-            tbody.innerHTML = "";
-            gameData.forEach((data, index) => {
-                let row = document.createElement("tr");
-                let statusClass = data.status === "benar" ? "row-correct" : "row-wrong";
-                row.innerHTML = `
-                    <td>${index + 1}</td>
-                    <td>${data.jawabanUser}</td>
-                    <td class="${statusClass}">${data.jawabanBenar}</td>
-                `;
+            tbody.innerHTML = '';
+            gameData.forEach(function (data, index) {
+                var row = document.createElement('tr');
+                var statusClass = data.status === 'benar' ? 'row-correct' : 'row-wrong';
+
+                var td1 = document.createElement('td');
+                td1.textContent = index + 1;
+
+                var td2 = document.createElement('td');
+                td2.textContent = data.jawabanUser;
+
+                var td3 = document.createElement('td');
+                td3.className = statusClass;
+                td3.textContent = data.jawabanBenar;
+
+                row.appendChild(td1);
+                row.appendChild(td2);
+                row.appendChild(td3);
                 tbody.appendChild(row);
             });
         }
