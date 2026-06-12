@@ -9,7 +9,6 @@ import { Skills } from "@/components/sections/Skills";
 import { Projects } from "@/components/sections/Projects";
 import { Certifications } from "@/components/sections/Certifications";
 import { Contact } from "@/components/sections/Contact";
-import { QRSection } from "@/components/sections/QRSection";
 
 export const dynamic = "force-dynamic";
 
@@ -36,7 +35,6 @@ export default async function Home() {
         <Projects items={projects} />
         <Certifications items={certifications} />
         <Contact profile={profile} />
-        <QRSection />
       </main>
       <Footer profile={profile} />
     </>
