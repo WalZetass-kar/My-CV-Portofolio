@@ -11,7 +11,7 @@ export const profileSchema = z.object({
   linkedin: z.string().max(500).default(""),
   github: z.string().max(500).default(""),
   website: z.string().max(500).default(""),
-  profileImage: z.string().max(500).default(""),
+  profileImage: z.string().max(10000000).default(""),
 });
 
 export const educationSchema = z.object({
@@ -45,7 +45,7 @@ export const projectSchema = z.object({
   demoUrl: z.string().max(500).default("#"),
   repoUrl: z.string().max(500).default("#"),
   color: z.string().max(200).default("from-red-500 to-orange-500"),
-  image: z.string().max(500).default(""),
+  image: z.string().max(10000000).default(""),
   order: z.number().int().min(0).max(1000).default(0),
 });
 
@@ -56,8 +56,8 @@ export const certificationSchema = z.object({
   category: z.string().min(1).max(100),
   description: z.string().max(2000).default(""),
   color: z.string().max(200).default("from-red-500 to-orange-500"),
-  image: z.string().max(500).default(""),
-  fileUrl: z.string().max(500).default(""),
+  image: z.string().max(10000000).default(""),
+  fileUrl: z.string().max(10000000).default(""),
   order: z.number().int().min(0).max(1000).default(0),
 });
 

@@ -4,10 +4,8 @@ import { writeFile } from "fs/promises";
 import path from "path";
 import { verifyAuth } from "@/lib/auth";
 import { ALLOWED_UPLOAD_TYPES, MAX_UPLOAD_SIZE } from "@/lib/validation";
-import { supabase } from "@/lib/supabase";
 
 const ALLOWED_EXTENSIONS = [".png", ".jpg", ".jpeg", ".webp", ".gif", ".pdf"];
-const BUCKET = "uploads";
 
 export async function POST(request: Request) {
   try {
@@ -35,28 +33,25 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "File extension not allowed." }, { status: 400 });
     }
 
-    const filename = `${randomBytes(8).toString("hex")}${ext}`;
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
-    if (supabase) {
-      const { data, error } = await supabase.storage
-        .from(BUCKET)
-        .upload(filename, buffer, { contentType: file.type, upsert: false });
-
-      if (error) {
-        console.error("Supabase upload error:", error);
-        return NextResponse.json({ error: "Upload failed: " + error.message }, { status: 500 });
+    // Try local storage first (development)
+    if (process.env.NODE_ENV !== "production") {
+      try {
+        const filename = `${randomBytes(8).toString("hex")}${ext}`;
+        const filepath = path.join(process.cwd(), "public", "uploads", filename);
+        await writeFile(filepath, buffer);
+        return NextResponse.json({ url: `/uploads/${filename}` });
+      } catch {
+        // Fall through to base64
       }
-
-      const { data: urlData } = supabase.storage.from(BUCKET).getPublicUrl(data.path);
-      return NextResponse.json({ url: urlData.publicUrl });
     }
 
-    // Fallback: local file storage (for local dev without Supabase)
-    const filepath = path.join(process.cwd(), "public", "uploads", filename);
-    await writeFile(filepath, buffer);
-    return NextResponse.json({ url: `/uploads/${filename}` });
+    // Serverless: store as base64 data URL
+    const base64 = buffer.toString("base64");
+    const dataUrl = `data:${file.type};base64,${base64}`;
+    return NextResponse.json({ url: dataUrl });
   } catch (e) {
     console.error("Upload error:", e);
     return NextResponse.json({ error: "Upload failed" }, { status: 500 });
