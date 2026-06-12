@@ -41,14 +41,14 @@ export function Contact({ profile }: { profile: Profile | null }) {
   return (
     <section id="contact" className="py-20 bg-surface">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <SectionHeading title="Get In Touch" subtitle="Feel free to reach out for collaborations, opportunities, or just a friendly chat" />
+        <SectionHeading title="Hubungi Saya" subtitle="Jangan ragu untuk menghubungi saya untuk kolaborasi, peluang, atau sekadar berbincang" />
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
           <ScrollReveal direction="left">
             <div>
-              <h3 className="text-xl font-bold text-foreground mb-6">Contact Information</h3>
+              <h3 className="text-xl font-bold text-foreground mb-6">Informasi Kontak</h3>
               {contactLinks.length === 0 ? (
-                <p className="text-muted">Contact information will appear here once configured.</p>
+                <p className="text-muted">Informasi kontak akan muncul setelah dikonfigurasi.</p>
               ) : (
                 <div className="space-y-4">
                   {contactLinks.map((item) => (
@@ -74,12 +74,12 @@ export function Contact({ profile }: { profile: Profile | null }) {
 
           <ScrollReveal direction="right">
             <form onSubmit={handleSubmit} className="p-6 rounded-xl bg-card border border-border">
-              <h3 className="text-xl font-bold text-foreground mb-6">Send a Message</h3>
+              <h3 className="text-xl font-bold text-foreground mb-6">Kirim Pesan</h3>
               <div aria-live="polite" className="sr-only">{submitted ? "Message prepared! Check your email client." : ""}</div>
 
               <div className="space-y-4">
                 <div>
-                  <label htmlFor="c-name" className="block text-sm font-medium text-foreground mb-1">Full Name</label>
+                  <label htmlFor="c-name" className="block text-sm font-medium text-foreground mb-1">Nama Lengkap</label>
                   <input type="text" id="c-name" required value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} className="w-full px-4 py-2.5 rounded-lg bg-surface border border-border text-foreground placeholder:text-muted focus-visible:ring-2 focus-visible:ring-accent/30 focus-visible:border-accent transition-colors" placeholder="Your name" />
                 </div>
                 <div>
@@ -87,15 +87,15 @@ export function Contact({ profile }: { profile: Profile | null }) {
                   <input type="email" id="c-email" required value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} className="w-full px-4 py-2.5 rounded-lg bg-surface border border-border text-foreground placeholder:text-muted focus-visible:ring-2 focus-visible:ring-accent/30 focus-visible:border-accent transition-colors" placeholder="your@email.com" />
                 </div>
                 <div>
-                  <label htmlFor="c-subject" className="block text-sm font-medium text-foreground mb-1">Subject</label>
-                  <input type="text" id="c-subject" required value={formData.subject} onChange={(e) => setFormData({ ...formData, subject: e.target.value })} className="w-full px-4 py-2.5 rounded-lg bg-surface border border-border text-foreground placeholder:text-muted focus-visible:ring-2 focus-visible:ring-accent/30 focus-visible:border-accent transition-colors" placeholder="What is this about?" />
+                  <label htmlFor="c-subject" className="block text-sm font-medium text-foreground mb-1">Subjek</label>
+                  <input type="text" id="c-subject" required value={formData.subject} onChange={(e) => setFormData({ ...formData, subject: e.target.value })} className="w-full px-4 py-2.5 rounded-lg bg-surface border border-border text-foreground placeholder:text-muted focus-visible:ring-2 focus-visible:ring-accent/30 focus-visible:border-accent transition-colors" placeholder="Tentang apa?" />
                 </div>
                 <div>
-                  <label htmlFor="c-message" className="block text-sm font-medium text-foreground mb-1">Message</label>
-                  <textarea id="c-message" required rows={4} value={formData.message} onChange={(e) => setFormData({ ...formData, message: e.target.value })} className="w-full px-4 py-2.5 rounded-lg bg-surface border border-border text-foreground placeholder:text-muted focus-visible:ring-2 focus-visible:ring-accent/30 focus-visible:border-accent transition-colors resize-none" placeholder="Your message..." />
+                  <label htmlFor="c-message" className="block text-sm font-medium text-foreground mb-1">Pesan</label>
+                  <textarea id="c-message" required rows={4} value={formData.message} onChange={(e) => setFormData({ ...formData, message: e.target.value })} className="w-full px-4 py-2.5 rounded-lg bg-surface border border-border text-foreground placeholder:text-muted focus-visible:ring-2 focus-visible:ring-accent/30 focus-visible:border-accent transition-colors resize-none" placeholder="Pesan Anda..." />
                 </div>
                 <button type="submit" className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-accent text-white rounded-lg font-medium hover:bg-accent-hover transition-colors shadow-lg shadow-accent/25">
-                  {submitted ? (<><CheckCircle className="w-4 h-4" /> Opening Email Client...</>) : (<><Send className="w-4 h-4" /> Send Message</>)}
+                  {submitted ? (<><CheckCircle className="w-4 h-4" /> Membuka Email...</>) : (<><Send className="w-4 h-4" /> Send Message</>)}
                 </button>
               </div>
             </form>

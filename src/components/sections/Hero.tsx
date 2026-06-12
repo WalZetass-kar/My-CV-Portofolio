@@ -94,7 +94,7 @@ export function Hero({ profile }: { profile: Profile | null }) {
               transition={{ delay: 0.2 }}
               className="text-accent font-medium mb-2"
             >
-              Hello, I&apos;m
+              Halo, saya
             </motion.p>
             <motion.h1
               initial={{ opacity: 0, y: 20 }}

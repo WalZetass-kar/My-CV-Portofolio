@@ -21,11 +21,11 @@ export function Projects({ items }: { items: ProjectItem[] }) {
     <section id="projects" className="py-20 bg-surface">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <SectionHeading
-          title="Featured Projects"
-          subtitle="A selection of projects showcasing my technical skills and problem-solving abilities"
+          title="Proyek Unggulan"
+          subtitle="Kumpulan proyek yang menunjukkan keahlian teknis dan kemampuan pemecahan masalah saya"
         />
 
-        {items.length === 0 ? <EmptyState title="No projects yet" description="Featured projects will appear here." /> : (
+        {items.length === 0 ? <EmptyState title="Belum ada proyek" description="Proyek unggulan akan muncul di sini." /> : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {items.map((project, index) => {
             const features: string[] = (() => { try { return JSON.parse(project.features); } catch { return []; } })();
@@ -55,7 +55,7 @@ export function Projects({ items }: { items: ProjectItem[] }) {
 
                     <div className="mb-4">
                       <p className="text-xs font-semibold text-foreground uppercase tracking-wider mb-2">
-                        Key Features
+                        Fitur Utama
                       </p>
                       <ul className="space-y-1">
                         {features.slice(0, 3).map((feature) => (
@@ -90,7 +90,7 @@ export function Projects({ items }: { items: ProjectItem[] }) {
                         className="flex items-center gap-1.5 text-sm font-medium text-accent hover:text-accent-hover transition-colors"
                       >
                         <ExternalLink className="w-4 h-4" />
-                        Live Demo
+                        Demo Langsung
                       </a>
                       )}
                       {project.repoUrl && project.repoUrl !== "#" && (
@@ -101,7 +101,7 @@ export function Projects({ items }: { items: ProjectItem[] }) {
                         className="flex items-center gap-1.5 text-sm font-medium text-muted hover:text-foreground transition-colors"
                       >
                         <GithubIcon className="w-4 h-4" />
-                        Source Code
+                        Kode Sumber
                       </a>
                       )}
                     </div>

@@ -23,14 +23,14 @@ export function Footer({ profile }: { profile: Profile | null }) {
               {brandName}<span className="text-accent">.</span>
             </a>
             <p className="mt-3 text-muted text-sm">
-              {profile?.title || "Full Stack Developer & AI Enthusiast"} building digital solutions
-              through modern technology.
+              {profile?.title || "Full Stack Developer & AI Enthusiast"} membangun solusi digital
+              melalui teknologi modern.
             </p>
           </div>
 
           <div>
             <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider mb-4">
-              Quick Links
+              Tautan Cepat
             </h3>
             <div className="grid grid-cols-2 gap-2">
               {["About", "Education", "Experience", "Skills", "Projects", "Certifications", "Contact"].map(
@@ -89,8 +89,8 @@ export function Footer({ profile }: { profile: Profile | null }) {
 
         <div className="mt-10 pt-8 border-t border-border text-center">
           <p className="text-sm text-muted flex items-center justify-center gap-1">
-            &copy; {currentYear} {profile?.name || "M. Ihwal Maulana"}. Built with{" "}
-            <Heart className="w-4 h-4 text-red-500 inline" /> using Next.js &amp;
+            &copy; {currentYear} {profile?.name || "M. Ihwal Maulana"}. Dibuat dengan{" "}
+            <Heart className="w-4 h-4 text-red-500 inline" /> menggunakan Next.js &amp;
             Tailwind CSS
           </p>
         </div>

@@ -39,8 +39,8 @@ export function About({ profile }: { profile: Profile | null }) {
     <section id="about" className="py-20 bg-surface">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <SectionHeading
-          title="About Me"
-          subtitle="Get to know my background, interests, and professional journey"
+          title="Tentang Saya"
+          subtitle="Kenali latar belakang, minat, dan perjalanan profesional saya"
         />
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
@@ -48,9 +48,9 @@ export function About({ profile }: { profile: Profile | null }) {
             <div className="space-y-4 text-muted leading-relaxed">
               <p>{summary}</p>
               <p>
-                I believe in the power of continuous learning, collaborative
-                teamwork, and clean code practices. I am committed to delivering
-                high-quality solutions that make a meaningful difference.
+                Saya percaya pada kekuatan pembelajaran berkelanjutan, kolaborasi
+                kerja tim, dan praktik kode yang bersih. Saya berkomitmen untuk menghadirkan
+                solusi berkualitas tinggi yang memberikan dampak berarti.
               </p>
             </div>
           </ScrollReveal>

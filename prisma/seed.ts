@@ -3,18 +3,43 @@ import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
 async function main() {
+  // Hapus semua data dulu untuk mencegah duplikat
+  await prisma.certification.deleteMany();
+  await prisma.project.deleteMany();
+  await prisma.skill.deleteMany();
+  await prisma.experience.deleteMany();
+  await prisma.education.deleteMany();
+  await prisma.profile.deleteMany();
+
+  console.log("Data lama dihapus, memulai seed...");
+
   await prisma.profile.upsert({
     where: { id: 1 },
-    update: {},
+    update: {
+      name: "M. Ihwal Maulana",
+      title: "Mahasiswa Informatika | Full Stack Developer | AI Enthusiast",
+      summary:
+        "Saya adalah mahasiswa Manajemen Informatika di Politeknik LP3I Pekanbaru dengan minat kuat di bidang rekayasa perangkat lunak, pengembangan web, pengembangan aplikasi desktop, sistem basis data, dan kecerdasan buatan. Saya memiliki pengalaman kepemimpinan melalui berbagai peran organisasi dan terus meningkatkan keterampilan teknis serta profesional melalui proyek nyata dan solusi berbasis teknologi.",
+      heroStatement:
+        "Membangun solusi digital melalui pengembangan perangkat lunak, teknologi modern, dan pembelajaran berkelanjutan.",
+      cvUrl: "/documents/CV.pdf",
+      email: "ihwalmaulana@example.com",
+      whatsapp: "+62 xxx-xxxx-xxxx",
+      linkedin: "https://linkedin.com/in/ihwal-maulana",
+      github: "https://github.com/walzetass",
+      website: "https://www.portofoliobywal.my.id",
+      profileImage: "/images/profile.png",
+    },
     create: {
       id: 1,
       name: "M. Ihwal Maulana",
-      title: "Informatics Student | Full Stack Developer | AI Enthusiast",
+      title: "Mahasiswa Informatika | Full Stack Developer | AI Enthusiast",
       summary:
-        "I am an Informatics Management student at Politeknik LP3I Pekanbaru with a strong interest in software engineering, web development, desktop application development, database systems, and artificial intelligence. I have leadership experience through various organizational roles and continuously improve my technical and professional skills through real-world projects and technology-based solutions.",
+        "Saya adalah mahasiswa Manajemen Informatika di Politeknik LP3I Pekanbaru dengan minat kuat di bidang rekayasa perangkat lunak, pengembangan web, pengembangan aplikasi desktop, sistem basis data, dan kecerdasan buatan. Saya memiliki pengalaman kepemimpinan melalui berbagai peran organisasi dan terus meningkatkan keterampilan teknis serta profesional melalui proyek nyata dan solusi berbasis teknologi.",
       heroStatement:
-        "Building digital solutions through software development, modern technology, and continuous learning.",
+        "Membangun solusi digital melalui pengembangan perangkat lunak, teknologi modern, dan pembelajaran berkelanjutan.",
       cvUrl: "/documents/CV.pdf",
+      profileImage: "/images/profile.png",
       email: "ihwalmaulana@example.com",
       whatsapp: "+62 xxx-xxxx-xxxx",
       linkedin: "https://linkedin.com/in/ihwal-maulana",
@@ -23,105 +48,100 @@ async function main() {
     },
   });
 
-  const educationData = [
+  const pendidikan = [
     {
       institution: "Politeknik LP3I Pekanbaru",
-      degree: "Management Informatics",
-      period: "2025 - Present",
-      description:
-        "Studying software development, database systems, system analysis, web technologies, computer networking, and information systems implementation.",
+      degree: "Manajemen Informatika",
+      period: "2025 - Sekarang",
+      description: "Mempelajari pengembangan perangkat lunak, sistem basis data, analisis sistem, teknologi web, jaringan komputer, dan implementasi sistem informasi.",
       order: 0,
     },
     {
       institution: "SMA Negeri 2 Kubu Babussalam",
-      degree: "High School Diploma",
+      degree: "SMA",
       period: "2022 - 2025",
-      description:
-        "Actively involved in academic and organizational activities while developing leadership, communication, and teamwork skills.",
+      description: "Aktif dalam kegiatan akademik dan organisasi sekaligus mengembangkan keterampilan kepemimpinan, komunikasi, dan kerja sama tim.",
       order: 1,
     },
   ];
-
-  for (const edu of educationData) {
+  for (const edu of pendidikan) {
     await prisma.education.create({ data: edu });
   }
 
-  const experienceData = [
+  const pengalaman = [
     {
-      role: "Chairman",
-      organization: "Student Executive Board (BEM)",
+      role: "Ketua",
+      organization: "Badan Eksekutif Mahasiswa (BEM)",
       location: "Politeknik LP3I Pekanbaru",
       responsibilities: JSON.stringify([
-        "Leading student organizational activities",
-        "Coordinating work programs across departments",
-        "Managing internal communication and team collaboration",
-        "Supporting campus events and initiatives",
+        "Memimpin kegiatan organisasi mahasiswa",
+        "Mengkoordinasikan program kerja antar departemen",
+        "Mengelola komunikasi internal dan kolaborasi tim",
+        "Mendukung acara dan inisiatif kampus",
       ]),
       order: 0,
     },
     {
-      role: "Chairman",
+      role: "Ketua",
       organization: "LP3I Computer Club (LCC)",
       location: "Politeknik LP3I Pekanbaru",
       responsibilities: JSON.stringify([
-        "Leading technology community activities",
-        "Organizing workshops and training sessions",
-        "Mentoring students in technology projects",
-        "Encouraging innovation and digital development",
+        "Memimpin kegiatan komunitas teknologi",
+        "Menyelenggarakan workshop dan pelatihan",
+        "Membimbing mahasiswa dalam proyek teknologi",
+        "Mendorong inovasi dan pengembangan digital",
       ]),
       order: 1,
     },
     {
-      role: "Chairman",
-      organization: "Student Council (OSIS)",
+      role: "Ketua",
+      organization: "Organisasi Siswa Intra Sekolah (OSIS)",
       location: "SMA Negeri 2 Kubu Babussalam",
       responsibilities: JSON.stringify([
-        "Managing student activities and events",
-        "Coordinating school programs with administration",
-        "Developing leadership and teamwork culture",
-        "Representing student body in school affairs",
+        "Mengelola kegiatan dan acara siswa",
+        "Mengkoordinasikan program sekolah bersama pihak administrasi",
+        "Membangun budaya kepemimpinan dan kerja sama tim",
+        "Mewakili siswa dalam urusan sekolah",
       ]),
       order: 2,
     },
   ];
-
-  for (const exp of experienceData) {
+  for (const exp of pengalaman) {
     await prisma.experience.create({ data: exp });
   }
 
-  const skillsData = [
-    { name: "JavaScript", level: 85, category: "Programming Languages", order: 0 },
-    { name: "TypeScript", level: 80, category: "Programming Languages", order: 1 },
-    { name: "Java", level: 70, category: "Programming Languages", order: 2 },
-    { name: "SQL", level: 75, category: "Programming Languages", order: 3 },
-    { name: "HTML", level: 95, category: "Programming Languages", order: 4 },
-    { name: "CSS", level: 90, category: "Programming Languages", order: 5 },
-    { name: "React", level: 85, category: "Frameworks & Technologies", order: 0 },
-    { name: "Next.js", level: 80, category: "Frameworks & Technologies", order: 1 },
-    { name: "Node.js", level: 75, category: "Frameworks & Technologies", order: 2 },
-    { name: "Electron", level: 70, category: "Frameworks & Technologies", order: 3 },
-    { name: "Tailwind CSS", level: 90, category: "Frameworks & Technologies", order: 4 },
-    { name: "Supabase", level: 65, category: "Frameworks & Technologies", order: 5 },
-    { name: "SQLite", level: 70, category: "Frameworks & Technologies", order: 6 },
-    { name: "Git", level: 80, category: "Development Tools", order: 0 },
-    { name: "GitHub", level: 85, category: "Development Tools", order: 1 },
-    { name: "VS Code", level: 90, category: "Development Tools", order: 2 },
-    { name: "Prompt Engineering", level: 85, category: "Additional Competencies", order: 0 },
-    { name: "AI Tools", level: 80, category: "Additional Competencies", order: 1 },
-    { name: "UI/UX Fundamentals", level: 70, category: "Additional Competencies", order: 2 },
-    { name: "System Analysis", level: 75, category: "Additional Competencies", order: 3 },
-    { name: "Project Management", level: 70, category: "Additional Competencies", order: 4 },
+  const keahlian = [
+    { name: "JavaScript", level: 85, category: "Bahasa Pemrograman", order: 0 },
+    { name: "TypeScript", level: 80, category: "Bahasa Pemrograman", order: 1 },
+    { name: "Java", level: 70, category: "Bahasa Pemrograman", order: 2 },
+    { name: "SQL", level: 75, category: "Bahasa Pemrograman", order: 3 },
+    { name: "HTML", level: 95, category: "Bahasa Pemrograman", order: 4 },
+    { name: "CSS", level: 90, category: "Bahasa Pemrograman", order: 5 },
+    { name: "React", level: 85, category: "Framework & Teknologi", order: 0 },
+    { name: "Next.js", level: 80, category: "Framework & Teknologi", order: 1 },
+    { name: "Node.js", level: 75, category: "Framework & Teknologi", order: 2 },
+    { name: "Electron", level: 70, category: "Framework & Teknologi", order: 3 },
+    { name: "Tailwind CSS", level: 90, category: "Framework & Teknologi", order: 4 },
+    { name: "Supabase", level: 65, category: "Framework & Teknologi", order: 5 },
+    { name: "SQLite", level: 70, category: "Framework & Teknologi", order: 6 },
+    { name: "Git", level: 80, category: "Tools Pengembangan", order: 0 },
+    { name: "GitHub", level: 85, category: "Tools Pengembangan", order: 1 },
+    { name: "VS Code", level: 90, category: "Tools Pengembangan", order: 2 },
+    { name: "Prompt Engineering", level: 85, category: "Kompetensi Tambahan", order: 0 },
+    { name: "AI Tools", level: 80, category: "Kompetensi Tambahan", order: 1 },
+    { name: "Dasar UI/UX", level: 70, category: "Kompetensi Tambahan", order: 2 },
+    { name: "Analisis Sistem", level: 75, category: "Kompetensi Tambahan", order: 3 },
+    { name: "Manajemen Proyek", level: 70, category: "Kompetensi Tambahan", order: 4 },
   ];
-
-  for (const skill of skillsData) {
+  for (const skill of keahlian) {
     await prisma.skill.create({ data: skill });
   }
 
-  const projectsData = [
+  const proyek = [
     {
       title: "ZetassPOS",
-      description: "Desktop Point of Sale application for managing sales transactions, products, and business reporting.",
-      features: JSON.stringify(["Product Management", "Sales Transactions", "Reporting System", "SQLite Database", "Multi-user Support"]),
+      description: "Aplikasi Point of Sale desktop untuk mengelola transaksi penjualan, produk, dan pelaporan bisnis.",
+      features: JSON.stringify(["Manajemen Produk", "Transaksi Penjualan", "Sistem Pelaporan", "Database SQLite", "Dukungan Multi-user"]),
       techStack: JSON.stringify(["Electron", "React", "TypeScript", "SQLite", "Tailwind CSS"]),
       demoUrl: "#",
       repoUrl: "#",
@@ -130,8 +150,8 @@ async function main() {
     },
     {
       title: "ZetassKost",
-      description: "Boarding house management system for handling room management, tenant tracking, and financial reporting.",
-      features: JSON.stringify(["Room Management", "Tenant Management", "Payment Monitoring", "Financial Reporting"]),
+      description: "Sistem manajemen kos untuk mengelola kamar, penyewa, dan pelaporan keuangan.",
+      features: JSON.stringify(["Manajemen Kamar", "Manajemen Penyewa", "Monitoring Pembayaran", "Pelaporan Keuangan"]),
       techStack: JSON.stringify(["Next.js", "React", "Supabase", "Tailwind CSS"]),
       demoUrl: "#",
       repoUrl: "#",
@@ -139,9 +159,9 @@ async function main() {
       order: 1,
     },
     {
-      title: "LCC Attendance System",
-      description: "QR-based attendance system with analytics, ranking, and certificate generation for the LP3I Computer Club.",
-      features: JSON.stringify(["QR Attendance", "Attendance Analytics", "Ranking System", "Certificate Generation"]),
+      title: "Sistem Absensi LCC",
+      description: "Sistem absensi berbasis QR dengan analitik, peringkat, dan pembuatan sertifikat untuk LP3I Computer Club.",
+      features: JSON.stringify(["Absensi QR", "Analitik Kehadiran", "Sistem Peringkat", "Pembuatan Sertifikat"]),
       techStack: JSON.stringify(["Next.js", "React", "Supabase", "Tailwind CSS"]),
       demoUrl: "#",
       repoUrl: "#",
@@ -149,9 +169,9 @@ async function main() {
       order: 2,
     },
     {
-      title: "Digital Student ID System",
-      description: "Digital student identification system with QR verification and administrative dashboard.",
-      features: JSON.stringify(["Digital ID Generation", "QR Verification", "Data Management", "Administrative Dashboard"]),
+      title: "Sistem Kartu Pelajar Digital",
+      description: "Sistem identifikasi siswa digital dengan verifikasi QR dan dashboard administrasi.",
+      features: JSON.stringify(["Pembuatan ID Digital", "Verifikasi QR", "Manajemen Data", "Dashboard Administrasi"]),
       techStack: JSON.stringify(["Next.js", "React", "Supabase", "Tailwind CSS"]),
       demoUrl: "#",
       repoUrl: "#",
@@ -159,83 +179,81 @@ async function main() {
       order: 3,
     },
     {
-      title: "Portfolio Website",
-      description: "Professional portfolio website with content management, project showcase, and SEO optimization.",
-      features: JSON.stringify(["Content Management", "Project Showcase", "Responsive Design", "SEO Optimization"]),
+      title: "Website Portfolio",
+      description: "Website portfolio profesional dengan manajemen konten, showcase proyek, dan optimasi SEO.",
+      features: JSON.stringify(["Manajemen Konten", "Showcase Proyek", "Desain Responsif", "Optimasi SEO"]),
       techStack: JSON.stringify(["Next.js", "React", "TypeScript", "Tailwind CSS"]),
       demoUrl: "https://www.portofoliobywal.my.id",
       repoUrl: "#",
-      color: "from-cyan-500 to-indigo-500",
+      color: "from-red-500 to-indigo-500",
       order: 4,
     },
   ];
-
-  for (const proj of projectsData) {
+  for (const proj of proyek) {
     await prisma.project.create({ data: proj });
   }
 
-  const certsData = [
+  const sertifikasi = [
     {
-      title: "Web Development Fundamentals",
-      issuer: "Online Learning Platform",
+      title: "Dasar Pengembangan Web",
+      issuer: "Platform Pembelajaran Online",
       date: "2025",
-      category: "Web Development",
-      description: "Comprehensive course covering HTML, CSS, JavaScript, and responsive web design principles.",
+      category: "Pengembangan Web",
+      description: "Kursus komprehensif mencakup HTML, CSS, JavaScript, dan prinsip desain web responsif.",
       color: "from-cyan-500 to-blue-500",
       order: 0,
     },
     {
-      title: "React & Next.js Development",
-      issuer: "Online Learning Platform",
+      title: "Pengembangan React & Next.js",
+      issuer: "Platform Pembelajaran Online",
       date: "2025",
-      category: "Web Development",
-      description: "Advanced course on building modern web applications with React and Next.js framework.",
+      category: "Pengembangan Web",
+      description: "Kursus lanjutan tentang membangun aplikasi web modern dengan React dan framework Next.js.",
       color: "from-blue-500 to-indigo-500",
       order: 1,
     },
     {
-      title: "Database Design & SQL",
-      issuer: "Online Learning Platform",
+      title: "Desain Database & SQL",
+      issuer: "Platform Pembelajaran Online",
       date: "2025",
       category: "Database",
-      description: "Course covering relational database design, SQL queries, normalization, and optimization.",
+      description: "Kursus mencakup desain database relasional, query SQL, normalisasi, dan optimasi.",
       color: "from-green-500 to-emerald-500",
       order: 2,
     },
     {
       title: "JavaScript & TypeScript Mastery",
-      issuer: "Online Learning Platform",
+      issuer: "Platform Pembelajaran Online",
       date: "2025",
-      category: "Programming",
-      description: "In-depth course on JavaScript ES6+ features and TypeScript for building type-safe applications.",
+      category: "Pemrograman",
+      description: "Kursus mendalam tentang fitur JavaScript ES6+ dan TypeScript untuk membangun aplikasi type-safe.",
       color: "from-yellow-500 to-orange-500",
       order: 3,
     },
     {
       title: "AI & Prompt Engineering",
-      issuer: "Online Learning Platform",
+      issuer: "Platform Pembelajaran Online",
       date: "2025",
-      category: "AI & Technology",
-      description: "Course on leveraging artificial intelligence tools and effective prompt engineering techniques.",
+      category: "AI & Teknologi",
+      description: "Kursus tentang memanfaatkan alat kecerdasan buatan dan teknik prompt engineering yang efektif.",
       color: "from-purple-500 to-pink-500",
       order: 4,
     },
     {
-      title: "Project Management Essentials",
-      issuer: "Online Learning Platform",
+      title: "Dasar Manajemen Proyek",
+      issuer: "Platform Pembelajaran Online",
       date: "2025",
-      category: "Management",
-      description: "Fundamentals of project management including planning, execution, and team coordination.",
+      category: "Manajemen",
+      description: "Fundamental manajemen proyek termasuk perencanaan, eksekusi, dan koordinasi tim.",
       color: "from-red-500 to-rose-500",
       order: 5,
     },
   ];
-
-  for (const cert of certsData) {
+  for (const cert of sertifikasi) {
     await prisma.certification.create({ data: cert });
   }
 
-  console.log("Database seeded successfully");
+  console.log("Database berhasil di-seed!");
 }
 
 main()

@@ -36,8 +36,8 @@ export function Certifications({ items }: { items: Certificate[] }) {
     <section id="certifications" className="py-20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <SectionHeading
-          title="Certifications"
-          subtitle="Professional certifications and completed courses"
+          title="Sertifikasi"
+          subtitle="Sertifikasi profesional dan kursus yang telah diselesaikan"
         />
 
         <ScrollReveal>
@@ -58,7 +58,7 @@ export function Certifications({ items }: { items: Certificate[] }) {
           </div>
         </ScrollReveal>
 
-        {filtered.length === 0 ? <EmptyState title="No certifications found" description="Certifications will appear here." /> : (
+        {filtered.length === 0 ? <EmptyState title="Belum ada sertifikasi" description="Sertifikasi akan muncul di sini." /> : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {filtered.map((cert, index) => (
             <ScrollReveal key={cert.title} delay={index * 0.1}>
@@ -135,7 +135,7 @@ export function Certifications({ items }: { items: Certificate[] }) {
                 className="inline-flex items-center gap-2 mb-4 px-4 py-2 rounded-lg bg-accent/10 text-accent text-sm font-medium hover:bg-accent/20 transition-colors"
               >
                 <FileText className="w-4 h-4" />
-                View Certificate
+                Lihat Sertifikat
               </a>
             )}
             {selectedCert.fileUrl && selectedCert.fileUrl.endsWith(".pdf") && (

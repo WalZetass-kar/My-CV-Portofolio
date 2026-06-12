@@ -15,12 +15,12 @@ export function Education({ items }: { items: EducationItem[] }) {
     <section id="education" className="py-20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <SectionHeading
-          title="Education"
-          subtitle="My academic journey and educational background"
+          title="Pendidikan"
+          subtitle="Perjalanan akademik dan latar belakang pendidikan saya"
         />
 
         {items.length === 0 ? (
-          <EmptyState title="No education entries yet" description="Education history will appear here." />
+          <EmptyState title="Belum ada data pendidikan" description="Riwayat pendidikan akan muncul di sini." />
         ) : (
         <div className="max-w-3xl mx-auto">
           <div className="relative">

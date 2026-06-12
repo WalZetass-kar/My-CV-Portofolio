@@ -5,14 +5,14 @@ import { Menu, X } from "lucide-react";
 import { ThemeToggle } from "../ui/ThemeToggle";
 
 const navLinks = [
-  { href: "#home", label: "Home" },
-  { href: "#about", label: "About" },
-  { href: "#education", label: "Education" },
-  { href: "#experience", label: "Experience" },
-  { href: "#skills", label: "Skills" },
-  { href: "#projects", label: "Projects" },
-  { href: "#certifications", label: "Certifications" },
-  { href: "#contact", label: "Contact" },
+  { href: "#home", label: "Beranda" },
+  { href: "#about", label: "Tentang" },
+  { href: "#education", label: "Pendidikan" },
+  { href: "#experience", label: "Pengalaman" },
+  { href: "#skills", label: "Keahlian" },
+  { href: "#projects", label: "Proyek" },
+  { href: "#certifications", label: "Sertifikasi" },
+  { href: "#contact", label: "Kontak" },
 ];
 
 export function Navbar() {

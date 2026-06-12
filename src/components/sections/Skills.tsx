@@ -46,11 +46,11 @@ export function Skills({ items }: { items: SkillItem[] }) {
     <section id="skills" className="py-20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <SectionHeading
-          title="Technical Skills"
-          subtitle="Technologies and tools I work with"
+          title="Keahlian Teknis"
+          subtitle="Teknologi dan tools yang saya kuasai"
         />
 
-        {items.length === 0 ? <EmptyState title="No skills added yet" description="Technical skills will appear here." /> : (
+        {items.length === 0 ? <EmptyState title="Belum ada keahlian" description="Keahlian teknis akan muncul di sini." /> : (
         <div ref={ref} className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {categoryEntries.map(([title, skills], catIndex) => (
             <ScrollReveal key={title} delay={catIndex * 0.1}>

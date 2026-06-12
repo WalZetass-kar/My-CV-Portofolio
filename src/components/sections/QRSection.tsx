@@ -17,7 +17,7 @@ export function QRSection() {
     return (
       <section id="qr" className="py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <SectionHeading title="Portfolio QR Code" />
+          <SectionHeading title="QR Code Portfolio" />
         </div>
       </section>
     );
@@ -29,8 +29,8 @@ export function QRSection() {
     <section id="qr" className="py-20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <SectionHeading
-          title="Portfolio QR Code"
-          subtitle="Share or scan to access my portfolio anywhere"
+          title="QR Code Portfolio"
+          subtitle="Pindai untuk mengakses portfolio saya dari mana saja"
         />
 
         <ScrollReveal>
@@ -49,7 +49,7 @@ export function QRSection() {
             <div className="mt-6 flex items-center gap-2 text-muted">
               <Smartphone className="w-5 h-5 text-accent" />
               <p className="text-sm font-medium">
-                Scan to View Portfolio, Projects, and Professional Profile
+                Scan untuk Melihat Portfolio, Proyek, dan Profil Profesional
               </p>
             </div>
 

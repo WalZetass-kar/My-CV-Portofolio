@@ -15,12 +15,12 @@ export function Experience({ items }: { items: ExperienceItem[] }) {
     <section id="experience" className="py-20 bg-surface">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <SectionHeading
-          title="Organizational Experience"
-          subtitle="Leadership roles and responsibilities in student organizations"
+          title="Pengalaman Organisasi"
+          subtitle="Peran kepemimpinan dan tanggung jawab dalam organisasi mahasiswa"
         />
 
         {items.length === 0 ? (
-          <EmptyState title="No experience entries yet" description="Organizational experience will appear here." />
+          <EmptyState title="Belum ada data pengalaman" description="Pengalaman organisasi akan muncul di sini." />
         ) : (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {items.map((exp, index) => {
