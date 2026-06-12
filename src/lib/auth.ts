@@ -1,28 +1,26 @@
-import { randomBytes, timingSafeEqual } from "crypto";
+import { createHmac, timingSafeEqual, randomBytes } from "crypto";
 import { cookies } from "next/headers";
 
 const COOKIE_NAME = "admin_token";
-const SESSION_TTL = 60 * 60 * 24 * 1000; // 24 hours
 
-const sessions = new Map<string, number>();
-
-function getPassword(): string {
+function getSecret(): string {
   const pw = process.env.ADMIN_PASSWORD;
   if (!pw) throw new Error("ADMIN_PASSWORD environment variable is not set");
   return pw;
 }
 
-export function createSession(): string {
-  const token = randomBytes(32).toString("hex");
-  sessions.set(token, Date.now() + SESSION_TTL);
-  return token;
+function signToken(payload: string): string {
+  const hmac = createHmac("sha256", getSecret());
+  hmac.update(payload);
+  return hmac.digest("hex");
 }
 
-function safeCompare(a: string, b: string): boolean {
-  const bufA = Buffer.from(a);
-  const bufB = Buffer.from(b);
-  if (bufA.length !== bufB.length) return false;
-  return timingSafeEqual(bufA, bufB);
+export function createSession(): string {
+  const nonce = randomBytes(16).toString("hex");
+  const expiry = Date.now() + 60 * 60 * 24 * 1000; // 24 hours
+  const payload = `${nonce}:${expiry}`;
+  const signature = signToken(payload);
+  return `${payload}:${signature}`;
 }
 
 export async function verifyAuth(): Promise<boolean> {
@@ -31,25 +29,29 @@ export async function verifyAuth(): Promise<boolean> {
     const token = cookieStore.get(COOKIE_NAME)?.value;
     if (!token) return false;
 
-    for (const [storedToken, expiry] of sessions) {
-      if (Date.now() > expiry) {
-        sessions.delete(storedToken);
-        continue;
-      }
-      if (safeCompare(Buffer.from(token).toString("hex"), Buffer.from(storedToken).toString("hex"))) {
-        return true;
-      }
-    }
-    return false;
+    const parts = token.split(":");
+    if (parts.length !== 3) return false;
+
+    const [nonce, expiryStr, signature] = parts;
+    const expiry = parseInt(expiryStr, 10);
+    if (isNaN(expiry) || Date.now() > expiry) return false;
+
+    const payload = `${nonce}:${expiryStr}`;
+    const expected = signToken(payload);
+
+    const sigBuf = Buffer.from(signature);
+    const expBuf = Buffer.from(expected);
+    if (sigBuf.length !== expBuf.length) return false;
+
+    return timingSafeEqual(sigBuf, expBuf);
   } catch {
     return false;
   }
 }
 
 export async function destroySession(): Promise<void> {
-  const cookieStore = await cookies();
-  const token = cookieStore.get(COOKIE_NAME)?.value;
-  if (token) sessions.delete(token);
+  // Stateless token - nothing to destroy server-side
+  // Cookie will be cleared by the logout route
 }
 
-export { COOKIE_NAME, getPassword };
+export { COOKIE_NAME, getSecret as getPassword };
