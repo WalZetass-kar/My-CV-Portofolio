@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { randomBytes } from "crypto";
+import { writeFile } from "fs/promises";
+import path from "path";
 import { verifyAuth } from "@/lib/auth";
 import { ALLOWED_UPLOAD_TYPES, MAX_UPLOAD_SIZE } from "@/lib/validation";
 import { supabase } from "@/lib/supabase";
@@ -37,21 +39,24 @@ export async function POST(request: Request) {
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
-    const { data, error } = await supabase.storage
-      .from(BUCKET)
-      .upload(filename, buffer, {
-        contentType: file.type,
-        upsert: false,
-      });
+    if (supabase) {
+      const { data, error } = await supabase.storage
+        .from(BUCKET)
+        .upload(filename, buffer, { contentType: file.type, upsert: false });
 
-    if (error) {
-      console.error("Supabase upload error:", error);
-      return NextResponse.json({ error: "Upload failed: " + error.message }, { status: 500 });
+      if (error) {
+        console.error("Supabase upload error:", error);
+        return NextResponse.json({ error: "Upload failed: " + error.message }, { status: 500 });
+      }
+
+      const { data: urlData } = supabase.storage.from(BUCKET).getPublicUrl(data.path);
+      return NextResponse.json({ url: urlData.publicUrl });
     }
 
-    const { data: urlData } = supabase.storage.from(BUCKET).getPublicUrl(data.path);
-
-    return NextResponse.json({ url: urlData.publicUrl });
+    // Fallback: local file storage (for local dev without Supabase)
+    const filepath = path.join(process.cwd(), "public", "uploads", filename);
+    await writeFile(filepath, buffer);
+    return NextResponse.json({ url: `/uploads/${filename}` });
   } catch (e) {
     console.error("Upload error:", e);
     return NextResponse.json({ error: "Upload failed" }, { status: 500 });
