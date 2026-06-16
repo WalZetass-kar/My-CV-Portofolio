@@ -1,5 +1,6 @@
 import { Mail, Heart } from "lucide-react";
 import { GithubIcon, LinkedinIcon } from "../ui/BrandIcons";
+import { VisitorCounter } from "../sections/VisitorCounter";
 
 interface Profile {
   name: string;
@@ -87,12 +88,13 @@ export function Footer({ profile }: { profile: Profile | null }) {
           </div>
         </div>
 
-        <div className="mt-10 pt-8 border-t border-border text-center">
+        <div className="mt-10 pt-8 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-3">
           <p className="text-sm text-muted flex items-center justify-center gap-1">
             &copy; {currentYear} {profile?.name || "M. Ihwal Maulana"}. Dibuat dengan{" "}
             <Heart className="w-4 h-4 text-red-500 inline" /> menggunakan Next.js &amp;
             Tailwind CSS
           </p>
+          <VisitorCounter />
         </div>
       </div>
     </footer>

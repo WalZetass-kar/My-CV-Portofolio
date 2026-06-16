@@ -73,3 +73,25 @@ model Certification {
   fileUrl     String @default("")
   order       Int    @default(0)
 }
+
+model PageView {
+  id        Int      @id @default(autoincrement())
+  path      String   @default("/")
+  userAgent String   @default("")
+  referer   String   @default("")
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+}
+
+model Message {
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String
+  subject   String
+  message   String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([isRead, createdAt])
+}

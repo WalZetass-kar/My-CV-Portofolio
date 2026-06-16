@@ -31,12 +31,19 @@ export const metadata: Metadata = {
   ],
   authors: [{ name: "M. Ihwal Maulana" }],
   robots: { index: true, follow: true },
+  manifest: "/manifest.json",
+  icons: {
+    icon: "/images/profile.png",
+    apple: "/images/profile.png",
+  },
   openGraph: {
     title: "M. Ihwal Maulana | Full Stack Developer",
     description:
       "Professional portfolio of M. Ihwal Maulana - Informatics Student, Full Stack Developer, and AI Enthusiast.",
     type: "website",
     url: "https://www.portofoliobywal.my.id",
+    siteName: "M. Ihwal Maulana Portfolio",
+    locale: "id_ID",
     images: [{ url: "/images/profile.png", width: 800, height: 800, alt: "M. Ihwal Maulana" }],
   },
   twitter: {

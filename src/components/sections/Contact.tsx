@@ -3,7 +3,7 @@
 import { useState, FormEvent } from "react";
 import { ScrollReveal } from "../ui/ScrollReveal";
 import { SectionHeading } from "../ui/SectionHeading";
-import { Mail, Phone, Globe, Send, CheckCircle } from "lucide-react";
+import { Mail, Phone, Globe, Send, CheckCircle, Loader2 } from "lucide-react";
 import { GithubIcon, LinkedinIcon } from "../ui/BrandIcons";
 
 type IconComponent = React.ComponentType<{ className?: string }>;
@@ -14,6 +14,7 @@ interface Profile { email: string; whatsapp: string; linkedin: string; github: s
 
 export function Contact({ profile }: { profile: Profile | null }) {
   const [submitted, setSubmitted] = useState(false);
+  const [sending, setSending] = useState(false);
   const [formData, setFormData] = useState({ name: "", email: "", subject: "", message: "" });
 
   const waNumber = profile?.whatsapp?.replace(/\D/g, "") || "";
@@ -26,16 +27,29 @@ export function Contact({ profile }: { profile: Profile | null }) {
     profile?.website && profile.website !== "#" ? { icon: Globe, label: "Portfolio", value: profile.website.replace("https://", ""), href: profile.website, external: true } : null,
   ].filter(Boolean) as { icon: IconComponent; label: string; value: string; href: string; external: boolean }[];
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    const email = profile?.email || "";
-    if (email) {
-      const mailto = `mailto:${email}?subject=${encodeURIComponent(formData.subject)}&body=${encodeURIComponent(`From: ${formData.name} (${formData.email})\n\n${formData.message}`)}`;
-      window.location.href = mailto;
+    setSending(true);
+    try {
+      const res = await fetch("/api/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        setFormData({ name: "", email: "", subject: "", message: "" });
+        setSending(false);
+        return;
+      }
+      setSubmitted(true);
+      setFormData({ name: "", email: "", subject: "", message: "" });
+      setTimeout(() => setSubmitted(false), 4000);
+    } catch {
+      // network error silently handled
+    } finally {
+      setSending(false);
     }
-    setSubmitted(true);
-    setTimeout(() => setSubmitted(false), 3000);
-    setFormData({ name: "", email: "", subject: "", message: "" });
   };
 
   return (
@@ -75,7 +89,7 @@ export function Contact({ profile }: { profile: Profile | null }) {
           <ScrollReveal direction="right">
             <form onSubmit={handleSubmit} className="p-6 rounded-xl bg-card border border-border">
               <h3 className="text-xl font-bold text-foreground mb-6">Kirim Pesan</h3>
-              <div aria-live="polite" className="sr-only">{submitted ? "Message prepared! Check your email client." : ""}</div>
+              <div aria-live="polite" className="sr-only">{submitted ? "Message sent successfully!" : ""}</div>
 
               <div className="space-y-4">
                 <div>
@@ -94,8 +108,8 @@ export function Contact({ profile }: { profile: Profile | null }) {
                   <label htmlFor="c-message" className="block text-sm font-medium text-foreground mb-1">Pesan</label>
                   <textarea id="c-message" required rows={4} value={formData.message} onChange={(e) => setFormData({ ...formData, message: e.target.value })} className="w-full px-4 py-2.5 rounded-lg bg-surface border border-border text-foreground placeholder:text-muted focus-visible:ring-2 focus-visible:ring-accent/30 focus-visible:border-accent transition-colors resize-none" placeholder="Pesan Anda..." />
                 </div>
-                <button type="submit" className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-accent text-white rounded-lg font-medium hover:bg-accent-hover transition-colors shadow-lg shadow-accent/25">
-                  {submitted ? (<><CheckCircle className="w-4 h-4" /> Membuka Email...</>) : (<><Send className="w-4 h-4" /> Send Message</>)}
+                <button type="submit" disabled={sending || submitted} className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-accent text-white rounded-lg font-medium hover:bg-accent-hover transition-colors shadow-lg shadow-accent/25 disabled:opacity-60">
+                  {submitted ? (<><CheckCircle className="w-4 h-4" /> Pesan Terkirim!</>) : sending ? (<><Loader2 className="w-4 h-4 animate-spin" /> Mengirim...</>) : (<><Send className="w-4 h-4" /> Kirim Pesan</>)}
                 </button>
               </div>
             </form>

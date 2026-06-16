@@ -11,6 +11,7 @@ import {
   Wrench,
   FolderOpen,
   Award,
+  Mail,
   LogOut,
   Menu,
   X,
@@ -26,6 +27,7 @@ const navItems = [
   { href: "/admin/skills", label: "Skills", icon: Wrench },
   { href: "/admin/projects", label: "Projects", icon: FolderOpen },
   { href: "/admin/certifications", label: "Certifications", icon: Award },
+  { href: "/admin/messages", label: "Messages", icon: Mail },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -33,13 +35,18 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [authState, setAuthState] = useState<"loading" | "authed" | "unauthed">("loading");
+  const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
     if (pathname === "/admin/login") { setAuthState("authed"); return; }
     fetch("/api/profile")
       .then((res) => {
-        if (res.ok) setAuthState("authed");
-        else { setAuthState("unauthed"); router.push("/admin/login"); }
+        if (res.ok) {
+          setAuthState("authed");
+          return fetch("/api/messages").then((r) => r.json()).then((msgs) => {
+            if (Array.isArray(msgs)) setUnreadCount(msgs.filter((m: { isRead: boolean }) => !m.isRead).length);
+          }).catch(() => {});
+        } else { setAuthState("unauthed"); router.push("/admin/login"); }
       })
       .catch(() => { setAuthState("unauthed"); router.push("/admin/login"); });
   }, [pathname, router]);
@@ -82,7 +89,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               }`}
             >
               <item.icon className="w-4 h-4" />
-              {item.label}
+              <span className="flex-1">{item.label}</span>
+              {item.href === "/admin/messages" && unreadCount > 0 && (
+                <span className="px-1.5 py-0.5 text-[10px] font-bold bg-accent text-white rounded-full min-w-[18px] text-center">{unreadCount}</span>
+              )}
             </Link>
           ))}
         </nav>

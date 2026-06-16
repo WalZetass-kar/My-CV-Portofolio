@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useCallback } from "react";
+import { useEffect, useRef } from "react";
 import { X } from "lucide-react";
 
 interface ModalProps {
@@ -14,10 +14,17 @@ interface ModalProps {
 export function Modal({ open, onClose, title, children, maxWidth = "max-w-lg" }: ModalProps) {
   const dialogRef = useRef<HTMLDivElement>(null);
   const previousFocus = useRef<HTMLElement | null>(null);
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
 
-  const handleKeyDown = useCallback(
-    (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+  useEffect(() => {
+    if (!open) return;
+
+    previousFocus.current = document.activeElement as HTMLElement;
+    document.body.style.overflow = "hidden";
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onCloseRef.current();
       if (e.key === "Tab" && dialogRef.current) {
         const focusable = dialogRef.current.querySelectorAll<HTMLElement>(
           'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
@@ -33,26 +40,20 @@ export function Modal({ open, onClose, title, children, maxWidth = "max-w-lg" }:
           first.focus();
         }
       }
-    },
-    [onClose]
-  );
+    };
 
-  useEffect(() => {
-    if (open) {
-      previousFocus.current = document.activeElement as HTMLElement;
-      document.body.style.overflow = "hidden";
-      document.addEventListener("keydown", handleKeyDown);
-      setTimeout(() => {
-        const first = dialogRef.current?.querySelector<HTMLElement>("button, input, select, textarea");
-        first?.focus();
-      }, 50);
-    }
+    document.addEventListener("keydown", handleKeyDown);
+    setTimeout(() => {
+      const first = dialogRef.current?.querySelector<HTMLElement>("button, input, select, textarea");
+      first?.focus();
+    }, 50);
+
     return () => {
       document.body.style.overflow = "";
       document.removeEventListener("keydown", handleKeyDown);
-      if (open) previousFocus.current?.focus();
+      previousFocus.current?.focus();
     };
-  }, [open, handleKeyDown]);
+  }, [open]);
 
   if (!open) return null;
 

@@ -2,12 +2,14 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Users, GraduationCap, Briefcase, Wrench, FolderOpen, Award, Loader2 } from "lucide-react";
+import { GraduationCap, Briefcase, Wrench, FolderOpen, Award, Mail, Eye, Loader2 } from "lucide-react";
 
-interface Counts { education: number; experience: number; skills: number; projects: number; certifications: number; }
+interface Counts { education: number; experience: number; skills: number; projects: number; certifications: number; messages: number; unread: number; }
+interface Analytics { total: number; today: number; daily: { date: string; count: number }[]; }
 
 export default function Dashboard() {
   const [counts, setCounts] = useState<Counts | null>(null);
+  const [analytics, setAnalytics] = useState<Analytics | null>(null);
   const [profile, setProfile] = useState<{ name: string } | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -19,8 +21,20 @@ export default function Dashboard() {
       fetch("/api/projects").then((r) => r.json()),
       fetch("/api/certifications").then((r) => r.json()),
       fetch("/api/profile").then((r) => r.json()),
-    ]).then(([edu, exp, sk, pr, cert, prof]) => {
-      setCounts({ education: edu.length, experience: exp.length, skills: sk.length, projects: pr.length, certifications: cert.length });
+      fetch("/api/messages").then((r) => r.json()).catch(() => []),
+      fetch("/api/analytics").then((r) => r.json()).catch(() => null),
+    ]).then(([edu, exp, sk, pr, cert, prof, msgs, stats]) => {
+      const messages = Array.isArray(msgs) ? msgs : [];
+      setCounts({
+        education: edu.length,
+        experience: exp.length,
+        skills: sk.length,
+        projects: pr.length,
+        certifications: cert.length,
+        messages: messages.length,
+        unread: messages.filter((m: { isRead: boolean }) => !m.isRead).length,
+      });
+      if (stats?.total !== undefined) setAnalytics(stats);
       setProfile(prof);
       setLoading(false);
     }).catch(() => setLoading(false));
@@ -60,10 +74,51 @@ export default function Dashboard() {
           </Link>
         ))}
 
+        <Link href="/admin/messages" className="p-5 rounded-xl bg-card border border-border hover:border-accent/50 transition-all hover:shadow-lg group">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-500 flex items-center justify-center relative">
+              <Mail className="w-6 h-6 text-white" />
+              {(counts?.unread ?? 0) > 0 && (
+                <span className="absolute -top-1 -right-1 w-5 h-5 bg-accent text-white text-[10px] font-bold rounded-full flex items-center justify-center">{counts!.unread}</span>
+              )}
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-foreground">{counts?.messages ?? 0}</p>
+              <p className="text-sm text-muted">Messages</p>
+            </div>
+          </div>
+        </Link>
+
+        {analytics && (
+          <div className="p-5 rounded-xl bg-card border border-border hover:border-accent/50 transition-all hover:shadow-lg">
+            <div className="flex items-center gap-4 mb-4">
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-teal-500 to-cyan-500 flex items-center justify-center">
+                <Eye className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-foreground">{analytics.total.toLocaleString("id-ID")}</p>
+                <p className="text-sm text-muted">Total Views</p>
+              </div>
+            </div>
+            <div className="flex items-end gap-1 h-12">
+              {analytics.daily.map((d) => {
+                const max = Math.max(...analytics.daily.map((x) => x.count), 1);
+                return (
+                  <div key={d.date} className="flex-1 flex flex-col items-center gap-1">
+                    <div className="w-full bg-accent/20 rounded-t" style={{ height: `${Math.max((d.count / max) * 100, 4)}%` }} />
+                    <span className="text-[9px] text-muted">{d.date.slice(8)}</span>
+                  </div>
+                );
+              })}
+            </div>
+            <p className="text-xs text-muted mt-2">Today: {analytics.today} views</p>
+          </div>
+        )}
+
         <Link href="/admin/profile" className="p-5 rounded-xl bg-card border border-border hover:border-accent/50 transition-all hover:shadow-lg group">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-500 flex items-center justify-center">
-              <Users className="w-6 h-6 text-white" />
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-slate-500 to-gray-600 flex items-center justify-center">
+              <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
             </div>
             <div>
               <p className="text-sm font-bold text-foreground">Profile Settings</p>

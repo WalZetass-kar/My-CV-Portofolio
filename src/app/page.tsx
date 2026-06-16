@@ -23,8 +23,38 @@ export default async function Home() {
       prisma.certification.findMany({ orderBy: { order: "asc" } }),
     ]);
 
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Person",
+        name: profile?.name || "M. Ihwal Maulana",
+        jobTitle: profile?.title || "Full Stack Developer",
+        description: profile?.summary || "",
+        url: "https://www.portofoliobywal.my.id",
+        image: profile?.profileImage || "https://www.portofoliobywal.my.id/images/profile.png",
+        email: profile?.email || undefined,
+        sameAs: [
+          profile?.github && profile.github !== "#" ? profile.github : null,
+          profile?.linkedin && profile.linkedin !== "#" ? profile.linkedin : null,
+          profile?.website && profile.website !== "#" ? profile.website : null,
+        ].filter(Boolean),
+      },
+      {
+        "@type": "WebSite",
+        name: `${profile?.name || "M. Ihwal Maulana"} - Portfolio`,
+        url: "https://www.portofoliobywal.my.id",
+        description: profile?.heroStatement || "",
+      },
+    ],
+  };
+
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <Navbar />
       <main id="main-content">
         <Hero profile={profile} />
