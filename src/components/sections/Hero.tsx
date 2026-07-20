@@ -19,7 +19,7 @@ export function Hero({ profile }: { profile: Profile | null }) {
   const title = profile?.title || "Informatics Student | Full Stack Developer | AI Enthusiast";
   const heroStatement = profile?.heroStatement || "Building digital solutions through software development, modern technology, and continuous learning.";
   const cvUrl = profile?.cvUrl || "/documents/CV.pdf";
-  const profileImage = profile?.profileImage || "/images/profile.jpg";
+  const profileImage = "/images/profile.jpg";
 
   const nameParts = name.split(" ").filter(Boolean);
   const lastName = nameParts.length > 1 ? nameParts[nameParts.length - 1] : "";
