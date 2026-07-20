@@ -26,14 +26,14 @@ export interface Profile {
   profileImage: string;
   summary: string;
   email: string;
-  phone: string;
+  whatsapp: string;
   github: string;
   linkedin: string;
   website: string;
 }
 
-interface EducationItem { id: number; school: string; degree: string; field: string; startDate: string; endDate: string; description: string; }
-interface ExperienceItem { id: number; organization: string; position: string; startDate: string; endDate: string; description: string; responsibilities: string; }
+interface EducationItem { id: number; institution: string; degree: string; period: string; description: string; order: number; }
+interface ExperienceItem { id: number; role: string; organization: string; location: string; responsibilities: string; order: number; }
 interface SkillItem { name: string; level: number; category: string; }
 interface ProjectItem { title: string; description: string; features: string; techStack: string; demoUrl: string; repoUrl: string; color: string; image: string; }
 interface CertItem { title: string; issuer: string; date: string; category: string; description: string; color: string; image: string; fileUrl: string; }
