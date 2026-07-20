@@ -3,6 +3,12 @@
 import { motion, useReducedMotion } from "framer-motion";
 import { Download, FolderOpen, MessageCircle } from "lucide-react";
 import Image from "next/image";
+import dynamic from "next/dynamic";
+
+const HeroScene = dynamic(
+  () => import("@/components/three/HeroScene").then((m) => m.HeroScene),
+  { ssr: false }
+);
 
 interface Profile {
   name: string;
@@ -12,61 +18,13 @@ interface Profile {
   profileImage: string;
 }
 
-function AnimatedOrbs() {
-  const prefersReduced = useReducedMotion();
-  if (prefersReduced) return <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,var(--accent)/5%,transparent_70%)]" />;
-  return (
-    <div className="absolute inset-0 overflow-hidden pointer-events-none">
-      <motion.div
-        animate={{ x: [0, 80, -40, 0], y: [0, -60, 40, 0], scale: [1, 1.2, 0.9, 1] }}
-        transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-        className="absolute top-[10%] left-[10%] w-64 h-64 rounded-full bg-accent/8 blur-3xl"
-      />
-      <motion.div
-        animate={{ x: [0, -60, 50, 0], y: [0, 80, -30, 0], scale: [1, 0.8, 1.1, 1] }}
-        transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
-        className="absolute top-[30%] right-[5%] w-80 h-80 rounded-full bg-orange-500/8 blur-3xl"
-      />
-      <motion.div
-        animate={{ x: [0, 40, -70, 0], y: [0, -40, 60, 0], scale: [1, 1.3, 0.7, 1] }}
-        transition={{ duration: 18, repeat: Infinity, ease: "linear" }}
-        className="absolute bottom-[10%] left-[30%] w-72 h-72 rounded-full bg-accent/6 blur-3xl"
-      />
-      <motion.div
-        animate={{ x: [0, -30, 60, 0], y: [0, 50, -50, 0] }}
-        transition={{ duration: 22, repeat: Infinity, ease: "linear" }}
-        className="absolute top-[60%] right-[20%] w-48 h-48 rounded-full bg-amber-500/6 blur-3xl"
-      />
-      {[...Array(6)].map((_, i) => (
-        <motion.div
-          key={i}
-          animate={{
-            y: [0, -600],
-            opacity: [0, 1, 0],
-          }}
-          transition={{
-            duration: 8 + i * 2,
-            repeat: Infinity,
-            delay: i * 1.5,
-            ease: "linear",
-          }}
-          className="absolute w-1 h-1 rounded-full bg-accent/40"
-          style={{
-            left: `${15 + i * 15}%`,
-            bottom: "-5%",
-          }}
-        />
-      ))}
-    </div>
-  );
-}
-
 export function Hero({ profile }: { profile: Profile | null }) {
+  const prefersReduced = useReducedMotion();
   const name = profile?.name || "M. Ihwal Maulana";
   const title = profile?.title || "Informatics Student | Full Stack Developer | AI Enthusiast";
   const heroStatement = profile?.heroStatement || "Building digital solutions through software development, modern technology, and continuous learning.";
   const cvUrl = profile?.cvUrl || "/documents/CV.pdf";
-  const profileImage = profile?.profileImage || "/images/profile.png";
+  const profileImage = profile?.profileImage || "/images/profile.jpg";
 
   const nameParts = name.split(" ").filter(Boolean);
   const lastName = nameParts.length > 1 ? nameParts[nameParts.length - 1] : "";
@@ -77,9 +35,11 @@ export function Hero({ profile }: { profile: Profile | null }) {
       id="home"
       className="min-h-screen flex items-center pt-16 relative overflow-hidden"
     >
-      <AnimatedOrbs />
+      {/* 3D Background Scene */}
+      {!prefersReduced && <HeroScene />}
 
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,var(--accent)/5%,transparent_70%)]" />
+      {/* Gradient overlay */}
+      <div className="absolute inset-0 bg-gradient-to-b from-background/0 via-background/50 to-background z-[1]" />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 w-full">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
@@ -131,21 +91,24 @@ export function Hero({ profile }: { profile: Profile | null }) {
               <a
                 href={cvUrl}
                 download
-                className="inline-flex items-center gap-2 px-6 py-3 bg-accent text-white rounded-lg font-medium hover:bg-accent-hover transition-colors shadow-lg shadow-accent/25"
+                className="magnetic-btn inline-flex items-center gap-2 px-6 py-3 bg-accent text-white rounded-lg font-medium hover:bg-accent-hover transition-all duration-300 shadow-lg shadow-accent/25 hover:shadow-xl hover:shadow-accent/30 hover:scale-105 active:scale-95"
+                data-cursor-hover
               >
                 <Download className="w-4 h-4" />
                 Download CV
               </a>
               <a
                 href="#projects"
-                className="inline-flex items-center gap-2 px-6 py-3 border-2 border-accent text-accent rounded-lg font-medium hover:bg-accent hover:text-white transition-colors"
+                className="magnetic-btn inline-flex items-center gap-2 px-6 py-3 border-2 border-accent text-accent rounded-lg font-medium hover:bg-accent hover:text-white transition-all duration-300 hover:scale-105 active:scale-95"
+                data-cursor-hover
               >
                 <FolderOpen className="w-4 h-4" />
                 View Projects
               </a>
               <a
                 href="#contact"
-                className="inline-flex items-center gap-2 px-6 py-3 border border-border text-foreground rounded-lg font-medium hover:bg-surface transition-colors"
+                className="magnetic-btn inline-flex items-center gap-2 px-6 py-3 border border-border text-foreground rounded-lg font-medium hover:bg-surface transition-all duration-300 hover:scale-105 active:scale-95"
+                data-cursor-hover
               >
                 <MessageCircle className="w-4 h-4" />
                 Contact Me

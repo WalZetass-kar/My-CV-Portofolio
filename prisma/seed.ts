@@ -28,7 +28,7 @@ async function main() {
       linkedin: "https://linkedin.com/in/ihwal-maulana",
       github: "https://github.com/walzetass",
       website: "https://www.portofoliobywal.my.id",
-      profileImage: "/images/profile.png",
+      profileImage: "/images/profile.jpg",
     },
     create: {
       id: 1,
@@ -39,7 +39,7 @@ async function main() {
       heroStatement:
         "Membangun solusi digital melalui pengembangan perangkat lunak, teknologi modern, dan pembelajaran berkelanjutan.",
       cvUrl: "/documents/CV.pdf",
-      profileImage: "/images/profile.png",
+      profileImage: "/images/profile.jpg",
       email: "ihwalmaulana@example.com",
       whatsapp: "+62 xxx-xxxx-xxxx",
       linkedin: "https://linkedin.com/in/ihwal-maulana",

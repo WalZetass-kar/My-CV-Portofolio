@@ -1,14 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
-import { Hero } from "@/components/sections/Hero";
-import { About } from "@/components/sections/About";
-import { Education } from "@/components/sections/Education";
-import { Experience } from "@/components/sections/Experience";
-import { Skills } from "@/components/sections/Skills";
-import { Projects } from "@/components/sections/Projects";
-import { Certifications } from "@/components/sections/Certifications";
-import { Contact } from "@/components/sections/Contact";
+import { ClientSections } from "@/components/ClientSections";
 
 export const dynamic = "force-dynamic";
 
@@ -32,7 +25,7 @@ export default async function Home() {
         jobTitle: profile?.title || "Full Stack Developer",
         description: profile?.summary || "",
         url: "https://www.portofoliobywal.my.id",
-        image: profile?.profileImage || "https://www.portofoliobywal.my.id/images/profile.png",
+        image: profile?.profileImage || "https://www.portofoliobywal.my.id/images/profile.jpg",
         email: profile?.email || undefined,
         sameAs: [
           profile?.github && profile.github !== "#" ? profile.github : null,
@@ -56,16 +49,14 @@ export default async function Home() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
       <Navbar />
-      <main id="main-content">
-        <Hero profile={profile} />
-        <About profile={profile} />
-        <Education items={education} />
-        <Experience items={experience} />
-        <Skills items={skills} />
-        <Projects items={projects} />
-        <Certifications items={certifications} />
-        <Contact profile={profile} />
-      </main>
+      <ClientSections
+        profile={profile}
+        education={education}
+        experience={experience}
+        skills={skills}
+        projects={projects}
+        certifications={certifications}
+      />
       <Footer profile={profile} />
     </>
   );

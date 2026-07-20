@@ -3,8 +3,8 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider = "sqlite"
+  url      = "file:./dev.db"
 }
 
 model Profile {
@@ -14,7 +14,7 @@ model Profile {
   summary       String
   heroStatement String
   cvUrl         String @default("/documents/CV.pdf")
-  profileImage  String @default("/images/profile.png")
+  profileImage  String @default("/images/profile.jpg")
   email         String @default("")
   whatsapp      String @default("")
   linkedin      String @default("")

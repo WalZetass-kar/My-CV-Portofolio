@@ -33,8 +33,8 @@ export const metadata: Metadata = {
   robots: { index: true, follow: true },
   manifest: "/manifest.json",
   icons: {
-    icon: "/images/profile.png",
-    apple: "/images/profile.png",
+    icon: "/images/profile.jpg",
+    apple: "/images/profile.jpg",
   },
   openGraph: {
     title: "M. Ihwal Maulana | Full Stack Developer",
@@ -44,14 +44,14 @@ export const metadata: Metadata = {
     url: "https://www.portofoliobywal.my.id",
     siteName: "M. Ihwal Maulana Portfolio",
     locale: "id_ID",
-    images: [{ url: "/images/profile.png", width: 800, height: 800, alt: "M. Ihwal Maulana" }],
+    images: [{ url: "/images/profile.jpg", width: 800, height: 800, alt: "M. Ihwal Maulana" }],
   },
   twitter: {
     card: "summary_large_image",
     title: "M. Ihwal Maulana | Full Stack Developer",
     description:
       "Professional portfolio of M. Ihwal Maulana - Informatics Student, Full Stack Developer, and AI Enthusiast.",
-    images: ["/images/profile.png"],
+    images: ["/images/profile.jpg"],
   },
 };
 
