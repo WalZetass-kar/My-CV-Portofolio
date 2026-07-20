@@ -2,10 +2,7 @@
 
 import dynamic from "next/dynamic";
 
-const Hero = dynamic(() => import("@/components/sections/Hero").then(m => ({ default: m.Hero })), {
-  ssr: false,
-  loading: () => <div className="min-h-screen flex items-center justify-center"><div className="w-12 h-12 rounded-full border-4 border-accent/20 border-t-accent animate-spin" /></div>
-});
+const Hero = dynamic(() => import("@/components/sections/Hero").then(m => ({ default: m.Hero })), { ssr: false });
 const About = dynamic(() => import("@/components/sections/About").then(m => ({ default: m.About })), { ssr: false });
 const Education = dynamic(() => import("@/components/sections/Education").then(m => ({ default: m.Education })), { ssr: false });
 const Experience = dynamic(() => import("@/components/sections/Experience").then(m => ({ default: m.Experience })), { ssr: false });

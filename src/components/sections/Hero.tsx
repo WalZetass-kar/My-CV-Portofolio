@@ -3,12 +3,7 @@
 import { motion, useReducedMotion } from "framer-motion";
 import { Download, FolderOpen, MessageCircle } from "lucide-react";
 import Image from "next/image";
-import dynamic from "next/dynamic";
-
-const HeroScene = dynamic(
-  () => import("@/components/three/HeroScene").then((m) => m.HeroScene),
-  { ssr: false }
-);
+import { HeroScene } from "../three/HeroScene";
 
 interface Profile {
   name: string;
@@ -31,14 +26,9 @@ export function Hero({ profile }: { profile: Profile | null }) {
   const firstName = lastName ? nameParts.slice(0, -1).join(" ") : name;
 
   return (
-    <section
-      id="home"
-      className="min-h-screen flex items-center pt-16 relative overflow-hidden"
-    >
-      {/* 3D Background Scene */}
+    <section id="home" className="min-h-screen flex items-center pt-16 relative overflow-hidden">
       {!prefersReduced && <HeroScene />}
 
-      {/* Gradient overlay */}
       <div className="absolute inset-0 bg-gradient-to-b from-background/0 via-background/50 to-background z-[1]" />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 w-full">
@@ -88,30 +78,17 @@ export function Hero({ profile }: { profile: Profile | null }) {
               transition={{ delay: 0.8 }}
               className="flex flex-wrap gap-3"
             >
-              <a
-                href={cvUrl}
-                download
-                className="magnetic-btn inline-flex items-center gap-2 px-6 py-3 bg-accent text-white rounded-lg font-medium hover:bg-accent-hover transition-all duration-300 shadow-lg shadow-accent/25 hover:shadow-xl hover:shadow-accent/30 hover:scale-105 active:scale-95"
-                data-cursor-hover
-              >
-                <Download className="w-4 h-4" />
-                Download CV
+              <a href={cvUrl} download
+                className="inline-flex items-center gap-2 px-6 py-3 bg-accent text-white rounded-lg font-medium hover:bg-accent-hover transition-all duration-300 shadow-lg shadow-accent/25 hover:shadow-xl hover:shadow-accent/30 hover:scale-105 active:scale-95">
+                <Download className="w-4 h-4" />Download CV
               </a>
-              <a
-                href="#projects"
-                className="magnetic-btn inline-flex items-center gap-2 px-6 py-3 border-2 border-accent text-accent rounded-lg font-medium hover:bg-accent hover:text-white transition-all duration-300 hover:scale-105 active:scale-95"
-                data-cursor-hover
-              >
-                <FolderOpen className="w-4 h-4" />
-                View Projects
+              <a href="#projects"
+                className="inline-flex items-center gap-2 px-6 py-3 border-2 border-accent text-accent rounded-lg font-medium hover:bg-accent hover:text-white transition-all duration-300 hover:scale-105 active:scale-95">
+                <FolderOpen className="w-4 h-4" />View Projects
               </a>
-              <a
-                href="#contact"
-                className="magnetic-btn inline-flex items-center gap-2 px-6 py-3 border border-border text-foreground rounded-lg font-medium hover:bg-surface transition-all duration-300 hover:scale-105 active:scale-95"
-                data-cursor-hover
-              >
-                <MessageCircle className="w-4 h-4" />
-                Contact Me
+              <a href="#contact"
+                className="inline-flex items-center gap-2 px-6 py-3 border border-border text-foreground rounded-lg font-medium hover:bg-surface transition-all duration-300 hover:scale-105 active:scale-95">
+                <MessageCircle className="w-4 h-4" />Contact Me
               </a>
             </motion.div>
           </motion.div>

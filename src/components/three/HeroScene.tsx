@@ -1,128 +1,111 @@
 "use client";
 
-import { useRef, useMemo } from "react";
-import { Canvas, useFrame } from "@react-three/fiber";
-import { Float, MeshDistortMaterial, MeshWobbleMaterial } from "@react-three/drei";
-import * as THREE from "three";
+import { motion } from "framer-motion";
 
-function FloatingOctahedron() {
-  const ref = useRef<THREE.Mesh>(null!);
-  useFrame((state) => {
-    ref.current.rotation.x = Math.sin(state.clock.elapsedTime * 0.3) * 0.5;
-    ref.current.rotation.y += 0.005;
-  });
+function FloatingShape({
+  className,
+  delay = 0,
+  duration = 20,
+  children,
+}: {
+  className?: string;
+  delay?: number;
+  duration?: number;
+  children: React.ReactNode;
+}) {
   return (
-    <Float speed={2} rotationIntensity={0.5} floatIntensity={1.5}>
-      <mesh ref={ref} position={[-3, 1.5, -2]}>
-        <octahedronGeometry args={[0.8, 0]} />
-        <MeshDistortMaterial
-          color="#ef4444"
-          distort={0.3}
-          speed={2}
-          roughness={0.2}
-          metalness={0.8}
-        />
-      </mesh>
-    </Float>
-  );
-}
-
-function FloatingTorus() {
-  const ref = useRef<THREE.Mesh>(null!);
-  useFrame((state) => {
-    ref.current.rotation.x = state.clock.elapsedTime * 0.2;
-    ref.current.rotation.z += 0.003;
-  });
-  return (
-    <Float speed={1.5} rotationIntensity={1} floatIntensity={2}>
-      <mesh ref={ref} position={[3.5, -1, -3]}>
-        <torusGeometry args={[0.6, 0.25, 16, 32]} />
-        <MeshWobbleMaterial
-          color="#f97316"
-          factor={0.4}
-          speed={1.5}
-          roughness={0.3}
-          metalness={0.7}
-        />
-      </mesh>
-    </Float>
-  );
-}
-
-function FloatingIcosahedron() {
-  const ref = useRef<THREE.Mesh>(null!);
-  useFrame((state) => {
-    ref.current.rotation.y = state.clock.elapsedTime * 0.15;
-    ref.current.rotation.x += 0.002;
-  });
-  return (
-    <Float speed={1.8} rotationIntensity={0.8} floatIntensity={1}>
-      <mesh ref={ref} position={[2, 2.5, -4]}>
-        <icosahedronGeometry args={[0.5, 0]} />
-        <meshStandardMaterial
-          color="#ef4444"
-          roughness={0.1}
-          metalness={0.9}
-          transparent
-          opacity={0.8}
-        />
-      </mesh>
-    </Float>
-  );
-}
-
-function Particles({ count = 50 }) {
-  const points = useMemo(() => {
-    const positions = new Float32Array(count * 3);
-    for (let i = 0; i < count; i++) {
-      positions[i * 3] = (Math.random() - 0.5) * 16;
-      positions[i * 3 + 1] = (Math.random() - 0.5) * 16;
-      positions[i * 3 + 2] = (Math.random() - 0.5) * 10 - 3;
-    }
-    return positions;
-  }, [count]);
-
-  const ref = useRef<THREE.Points>(null!);
-  useFrame((state) => {
-    ref.current.rotation.y = state.clock.elapsedTime * 0.02;
-  });
-
-  return (
-    <points ref={ref}>
-      <bufferGeometry>
-        <bufferAttribute attach="attributes-position" args={[points, 3]} />
-      </bufferGeometry>
-      <pointsMaterial size={0.04} color="#ef4444" transparent opacity={0.5} sizeAttenuation />
-    </points>
-  );
-}
-
-function Scene() {
-  return (
-    <>
-      <ambientLight intensity={0.3} />
-      <directionalLight position={[5, 5, 5]} intensity={0.8} />
-      <pointLight position={[-3, 2, 1]} intensity={0.5} color="#ef4444" />
-      <FloatingOctahedron />
-      <FloatingTorus />
-      <FloatingIcosahedron />
-      <Particles count={50} />
-    </>
+    <motion.div
+      className={`absolute pointer-events-none ${className}`}
+      animate={{
+        y: [0, -30, 20, -10, 0],
+        x: [0, 15, -10, 5, 0],
+        rotateX: [0, 45, -20, 30, 0],
+        rotateY: [0, -30, 60, -15, 0],
+        rotateZ: [0, 10, -5, 15, 0],
+      }}
+      transition={{
+        duration,
+        repeat: Infinity,
+        ease: "easeInOut",
+        delay,
+      }}
+    >
+      {children}
+    </motion.div>
   );
 }
 
 export function HeroScene() {
   return (
-    <div className="absolute inset-0 z-0 pointer-events-none">
-      <Canvas
-        camera={{ position: [0, 0, 6], fov: 50 }}
-        dpr={[1, 1.2]}
-        gl={{ antialias: false, alpha: true, powerPreference: "low-power" }}
-        style={{ background: "transparent" }}
-        frameloop="demand"
-      >
-        <Scene />
-      </Canvas>
+    <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden" style={{ perspective: "1200px" }}>
+      {/* Octahedron - Red */}
+      <FloatingShape className="top-[15%] left-[8%]" delay={0} duration={22}>
+        <div
+          className="w-16 h-16 md:w-20 md:h-20"
+          style={{ transformStyle: "preserve-3d", animation: "spin3d 12s linear infinite" }}
+        >
+          <div className="absolute inset-0 bg-accent/20 border border-accent/40" style={{ transform: "rotateY(0deg) translateZ(30px)" }} />
+          <div className="absolute inset-0 bg-accent/15 border border-accent/30" style={{ transform: "rotateY(90deg) translateZ(30px)" }} />
+          <div className="absolute inset-0 bg-accent/25 border border-accent/50" style={{ transform: "rotateX(90deg) translateZ(30px)" }} />
+        </div>
+      </FloatingShape>
+
+      {/* Torus - Orange */}
+      <FloatingShape className="top-[25%] right-[10%]" delay={2} duration={25}>
+        <div className="w-20 h-20 md:w-24 md:h-24 rounded-full border-4 border-orange-500/30 relative" style={{ transformStyle: "preserve-3d", animation: "floatTorus 8s ease-in-out infinite" }}>
+          <div className="absolute inset-1 rounded-full border-2 border-orange-500/20" />
+          <div className="absolute inset-0 rounded-full" style={{ background: "radial-gradient(circle, transparent 50%, var(--background) 70%)", opacity: 0.6 }} />
+        </div>
+      </FloatingShape>
+
+      {/* Cube - Red/Orange */}
+      <FloatingShape className="bottom-[20%] left-[20%]" delay={4} duration={18}>
+        <div
+          className="w-12 h-12 md:w-14 md:h-14"
+          style={{ transformStyle: "preserve-3d", animation: "spinCube 15s linear infinite" }}
+        >
+          <div className="absolute inset-0 bg-gradient-to-br from-accent/25 to-orange-500/20 border border-accent/30 backface-hidden" style={{ transform: "translateZ(24px)" }} />
+          <div className="absolute inset-0 bg-gradient-to-br from-accent/20 to-orange-500/15 border border-accent/25 backface-hidden" style={{ transform: "translateZ(-24px)" }} />
+          <div className="absolute inset-0 bg-gradient-to-br from-accent/22 to-orange-500/18 border border-accent/28 backface-hidden" style={{ transform: "rotateY(90deg) translateZ(24px)" }} />
+          <div className="absolute inset-0 bg-gradient-to-br from-accent/18 to-orange-500/22 border border-accent/32 backface-hidden" style={{ transform: "rotateY(-90deg) translateZ(24px)" }} />
+          <div className="absolute inset-0 bg-gradient-to-br from-accent/24 to-orange-500/16 border border-accent/26 backface-hidden" style={{ transform: "rotateX(90deg) translateZ(24px)" }} />
+          <div className="absolute inset-0 bg-gradient-to-br from-accent/20 to-orange-500/20 border border-accent/30 backface-hidden" style={{ transform: "rotateX(-90deg) translateZ(24px)" }} />
+        </div>
+      </FloatingShape>
+
+      {/* Triangle - Red */}
+      <FloatingShape className="top-[60%] right-[15%]" delay={1} duration={20}>
+        <div className="w-0 h-0 border-l-[20px] border-l-transparent border-r-[20px] border-r-transparent border-b-[35px] border-b-accent/25" style={{ filter: "drop-shadow(0 0 10px rgba(239,68,68,0.3))", animation: "spinY 10s linear infinite" }} />
+      </FloatingShape>
+
+      {/* Circle dots - particles */}
+      {Array.from({ length: 20 }).map((_, i) => (
+        <motion.div
+          key={i}
+          className="absolute rounded-full bg-accent/30"
+          style={{
+            width: Math.random() * 4 + 2,
+            height: Math.random() * 4 + 2,
+            left: `${Math.random() * 100}%`,
+            top: `${Math.random() * 100}%`,
+          }}
+          animate={{
+            y: [0, -(Math.random() * 40 + 20), 0],
+            opacity: [0.2, 0.6, 0.2],
+            scale: [1, 1.5, 1],
+          }}
+          transition={{
+            duration: Math.random() * 4 + 3,
+            repeat: Infinity,
+            ease: "easeInOut",
+            delay: Math.random() * 3,
+          }}
+        />
+      ))}
+
+      {/* Glow orbs */}
+      <div className="absolute top-[10%] left-[5%] w-64 h-64 bg-accent/5 rounded-full blur-3xl animate-pulse" />
+      <div className="absolute bottom-[10%] right-[10%] w-80 h-80 bg-orange-500/5 rounded-full blur-3xl animate-pulse" style={{ animationDelay: "2s" }} />
     </div>
   );
 }
