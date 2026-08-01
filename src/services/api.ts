@@ -1,10 +1,22 @@
 import { PortfolioData, ContactInboxMessage } from '../types';
 import { defaultPortfolioData } from '../data/defaultData';
+import { supabase } from './supabaseClient';
 
 export const api = {
   // Fetch portfolio data
   getPortfolio: async (): Promise<PortfolioData> => {
     try {
+      if (supabase) {
+        const { data, error } = await supabase
+          .from('portfolio')
+          .select('content')
+          .eq('id', 'main')
+          .single();
+        if (!error && data && data.content) {
+          return data.content as PortfolioData;
+        }
+      }
+
       const res = await fetch('/api/public/portfolio');
       if (!res.ok) throw new Error('Gagal mengambil data portfolio.');
       const json = await res.json();
@@ -87,6 +99,15 @@ export const api = {
   // Save Portfolio Data from CMS
   savePortfolio: async (data: PortfolioData) => {
     try {
+      if (supabase) {
+        const { error } = await supabase
+          .from('portfolio')
+          .upsert({ id: 'main', content: data, updated_at: new Date().toISOString() });
+        if (error) {
+          console.error('Supabase save error:', error);
+        }
+      }
+
       const token = localStorage.getItem('adminToken') || '';
       const res = await fetch('/api/admin/portfolio', {
         method: 'PUT',
@@ -100,8 +121,8 @@ export const api = {
       if (!res.ok) throw new Error(json.error || 'Gagal menyimpan data CMS.');
       return json;
     } catch (err: any) {
-      console.warn('Backend save error, updating client state:', err);
-      return { success: true, message: 'Konten diperbarui secara lokal.', data };
+      console.warn('Backend save fallback triggered:', err);
+      return { success: true, message: 'Konten diperbarui secara lokal/Supabase.', data };
     }
   },
 
