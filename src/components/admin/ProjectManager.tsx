@@ -38,10 +38,9 @@ export const ProjectManager: React.FC = () => {
 
     const slug = form.title.toLowerCase().replace(/[^a-z0-9]/g, '-');
 
+    let updatedList: Project[];
     if (editingProject) {
-      setProjectsList(
-        projectsList.map((p) => (p.id === editingProject.id ? ({ ...p, ...form, slug } as Project) : p))
-      );
+      updatedList = projectsList.map((p) => (p.id === editingProject.id ? ({ ...p, ...form, slug } as Project) : p));
       setEditingProject(null);
     } else {
       const newProj: Project = {
@@ -61,8 +60,10 @@ export const ProjectManager: React.FC = () => {
         year: form.year || '2026',
         order: projectsList.length + 1
       };
-      setProjectsList([...projectsList, newProj]);
+      updatedList = [...projectsList, newProj];
     }
+    setProjectsList(updatedList);
+    updatePartial('projects', updatedList, 'Auto-saved project list.');
 
     setForm({
       title: '',
@@ -86,7 +87,9 @@ export const ProjectManager: React.FC = () => {
   };
 
   const deleteProject = (id: string) => {
-    setProjectsList(projectsList.filter((p) => p.id !== id));
+    const updated = projectsList.filter((p) => p.id !== id);
+    setProjectsList(updated);
+    updatePartial('projects', updated, 'Deleted project.');
   };
 
   const moveOrder = (index: number, direction: 'up' | 'down') => {
@@ -99,6 +102,7 @@ export const ProjectManager: React.FC = () => {
 
     const reindexed = updated.map((item, idx) => ({ ...item, order: idx + 1 }));
     setProjectsList(reindexed);
+    updatePartial('projects', reindexed, 'Reordered project list.');
   };
 
   return (
