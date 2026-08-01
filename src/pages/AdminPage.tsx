@@ -34,8 +34,13 @@ export const AdminPage: React.FC = () => {
         <div className="flex items-center gap-3">
           <button
             type="button"
-            onClick={() => setIsAdminOpen(false)}
-            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold transition-all border border-slate-700 shadow-sm"
+            onClick={() => {
+              if (window.location.hash === '#admin' || window.location.pathname === '/4dminLogin') {
+                window.history.pushState('', document.title, window.location.pathname === '/4dminLogin' ? '/' : window.location.pathname + window.location.search);
+              }
+              setIsAdminOpen(false);
+            }}
+            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold transition-all border border-slate-700 shadow-sm cursor-pointer"
           >
             <ArrowLeft className="w-4 h-4 text-emerald-400" />
             <span>Kembali ke Website</span>
