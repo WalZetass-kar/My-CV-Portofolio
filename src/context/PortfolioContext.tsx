@@ -42,15 +42,18 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     setIsLoading(true);
     try {
       const fetched = await api.getPortfolio();
-      // If server returned valid data and it's not the default fallback, use it
-      const savedLocal = localStorage.getItem('cms_portfolio_data');
-      if (savedLocal) {
-        setData(JSON.parse(savedLocal));
-      } else {
+      if (fetched) {
         setData(fetched);
+        localStorage.setItem('cms_portfolio_data', JSON.stringify(fetched));
       }
     } catch (err) {
       console.error('Error loading portfolio:', err);
+      const savedLocal = localStorage.getItem('cms_portfolio_data');
+      if (savedLocal) {
+        try {
+          setData(JSON.parse(savedLocal));
+        } catch (e) {}
+      }
     } finally {
       setIsLoading(false);
     }
