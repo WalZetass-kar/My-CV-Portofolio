@@ -171,12 +171,25 @@ export const HeroManager: React.FC = () => {
               type="checkbox"
               id="hireStatus"
               checked={heroForm.isAvailableForHire}
-              onChange={(e) => setHeroForm({ ...heroForm, isAvailableForHire: e.target.checked })}
-              className="rounded-md border-slate-800 text-emerald-500 focus:ring-0"
+              onChange={(e) => {
+                const updated = { ...heroForm, isAvailableForHire: e.target.checked };
+                setHeroForm(updated);
+                updatePartial('hero', updated, 'Updated hire status');
+              }}
+              className="rounded-md border-slate-800 text-emerald-500 focus:ring-0 cursor-pointer"
             />
             <label htmlFor="hireStatus" className="text-xs text-slate-300 font-semibold cursor-pointer">
               Tampilkan status "Available for new opportunities"
             </label>
+          </div>
+          <div className="pt-4 border-t border-slate-800 flex justify-end">
+            <button
+              type="submit"
+              className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold transition-all shadow-md cursor-pointer"
+            >
+              <Save className="w-4 h-4" />
+              <span>Simpan Perubahan Hero</span>
+            </button>
           </div>
         </form>
 

@@ -24,18 +24,18 @@ export const AboutManager: React.FC = () => {
   const addPhotoFromUploader = (url: string) => {
     if (!url) return;
     const currentList = aboutForm.photoGallery || [];
-    setAboutForm({
-      ...aboutForm,
-      photoGallery: [...currentList, url]
-    });
+    const updatedGallery = [...currentList, url];
+    const updatedForm = { ...aboutForm, photoGallery: updatedGallery };
+    setAboutForm(updatedForm);
+    updatePartial('about', updatedForm, 'Added photo to gallery.');
   };
 
   const removePhoto = (index: number) => {
     const currentList = aboutForm.photoGallery || [];
-    setAboutForm({
-      ...aboutForm,
-      photoGallery: currentList.filter((_, i) => i !== index)
-    });
+    const updatedGallery = currentList.filter((_, i) => i !== index);
+    const updatedForm = { ...aboutForm, photoGallery: updatedGallery };
+    setAboutForm(updatedForm);
+    updatePartial('about', updatedForm, 'Removed photo from gallery.');
   };
 
   return (
