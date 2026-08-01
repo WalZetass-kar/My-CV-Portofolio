@@ -22,7 +22,15 @@ interface PortfolioContextType {
 const PortfolioContext = createContext<PortfolioContextType | undefined>(undefined);
 
 export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [data, setData] = useState<PortfolioData>(defaultPortfolioData);
+  const [data, setData] = useState<PortfolioData>(() => {
+    try {
+      const saved = localStorage.getItem('cms_portfolio_data');
+      if (saved) return JSON.parse(saved);
+    } catch (e) {
+      console.error('Failed to parse local portfolio data:', e);
+    }
+    return defaultPortfolioData;
+  });
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isAdminOpen, setIsAdminOpen] = useState<boolean>(false);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
@@ -34,7 +42,13 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     setIsLoading(true);
     try {
       const fetched = await api.getPortfolio();
-      setData(fetched);
+      // If server returned valid data and it's not the default fallback, use it
+      const savedLocal = localStorage.getItem('cms_portfolio_data');
+      if (savedLocal) {
+        setData(JSON.parse(savedLocal));
+      } else {
+        setData(fetched);
+      }
     } catch (err) {
       console.error('Error loading portfolio:', err);
     } finally {
@@ -68,9 +82,11 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
   const updateData = async (newData: PortfolioData) => {
     setData(newData);
+    localStorage.setItem('cms_portfolio_data', JSON.stringify(newData));
     const res = await api.savePortfolio(newData);
     if (res.data) {
       setData(res.data);
+      localStorage.setItem('cms_portfolio_data', JSON.stringify(res.data));
     }
   };
 
@@ -99,18 +115,23 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
     // Instant local state update for zero-latency UI reflection
     setData(updatedData);
+    localStorage.setItem('cms_portfolio_data', JSON.stringify(updatedData));
 
     // Save to backend JSON database
     const res = await api.savePortfolio(updatedData);
     if (res.data) {
       setData(res.data);
+      localStorage.setItem('cms_portfolio_data', JSON.stringify(res.data));
     }
   };
 
   const resetToDefault = async () => {
+    localStorage.removeItem('cms_portfolio_data');
     const res = await api.resetDatabase();
     if (res.data) {
       setData(res.data);
+    } else {
+      setData(defaultPortfolioData);
     }
   };
 
