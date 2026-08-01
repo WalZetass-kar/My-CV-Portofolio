@@ -1,102 +1,120 @@
-import { Mail, Heart } from "lucide-react";
-import { GithubIcon, LinkedinIcon } from "../ui/BrandIcons";
-import { VisitorCounter } from "../sections/VisitorCounter";
+import React from 'react';
+import { usePortfolio } from '../../context/PortfolioContext';
+import { ArrowUp, Github, Linkedin, Mail, MessageSquare, Instagram, Twitter } from 'lucide-react';
 
-interface Profile {
-  name: string;
-  title: string;
-  github: string;
-  linkedin: string;
-  email: string;
-}
+export const Footer: React.FC = () => {
+  const { data } = usePortfolio();
+  const { contact, settings, theme } = data;
 
-export function Footer({ profile }: { profile: Profile | null }) {
-  const currentYear = new Date().getFullYear();
-  const nameParts = (profile?.name || "M. Ihwal Maulana").split(" ").filter(Boolean);
-  const brandName = nameParts.length > 1 ? nameParts[1] : nameParts[0] || "Ihwal";
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   return (
-    <footer className="bg-surface border-t border-border">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <div>
-            <a href="#home" className="text-xl font-bold text-foreground">
-              {brandName}<span className="text-accent">.</span>
+    <footer className="bg-white text-slate-600 py-12 border-t border-slate-200/80">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex flex-col md:flex-row items-center justify-between gap-6 pb-8 border-b border-slate-200/60">
+          {/* Left Info */}
+          <div className="flex flex-col items-center md:items-start text-center md:text-left">
+            <a href="#hero" className="font-heading font-bold text-slate-900 text-xl tracking-tight mb-1 hover:text-emerald-600 transition-colors">
+              {theme.logoText || 'M. Ihwal Maulana'}
             </a>
-            <p className="mt-3 text-muted text-sm">
-              {profile?.title || "Full Stack Developer & AI Enthusiast"} membangun solusi digital
-              melalui teknologi modern.
+            <p className="text-xs text-slate-500 max-w-md">
+              Full Stack Developer &amp; AI Application Builder. Membangun produk perangkat lunak modern, intuitif, dan terpercaya.
             </p>
           </div>
 
-          <div>
-            <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider mb-4">
-              Tautan Cepat
-            </h3>
-            <div className="grid grid-cols-2 gap-2">
-              {["About", "Education", "Experience", "Skills", "Projects", "Certifications", "Contact"].map(
-                (link) => (
-                  <a
-                    key={link}
-                    href={`#${link.toLowerCase()}`}
-                    className="text-sm text-muted hover:text-accent transition-colors"
-                  >
-                    {link}
-                  </a>
-                )
-              )}
-            </div>
-          </div>
-
-          <div>
-            <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider mb-4">
-              Connect
-            </h3>
-            <div className="flex gap-3">
-              {profile?.github && profile.github !== "#" && (
-                <a
-                  href={profile.github}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="p-2 rounded-lg border border-border hover:bg-accent hover:text-white hover:border-accent transition-all"
-                  aria-label="GitHub"
-                >
-                  <GithubIcon className="w-5 h-5" />
-                </a>
-              )}
-              {profile?.linkedin && profile.linkedin !== "#" && (
-                <a
-                  href={profile.linkedin}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="p-2 rounded-lg border border-border hover:bg-accent hover:text-white hover:border-accent transition-all"
-                  aria-label="LinkedIn"
-                >
-                  <LinkedinIcon className="w-5 h-5" />
-                </a>
-              )}
-              {profile?.email && (
-                <a
-                  href={`mailto:${profile.email}`}
-                  className="p-2 rounded-lg border border-border hover:bg-accent hover:text-white hover:border-accent transition-all"
-                  aria-label="Email"
-                >
-                  <Mail className="w-5 h-5" />
-                </a>
-              )}
-            </div>
+          {/* Social Links */}
+          <div className="flex items-center gap-2.5">
+            {contact.github && (
+              <a
+                href={contact.github}
+                target="_blank"
+                rel="noreferrer"
+                className="w-9 h-9 rounded-full bg-slate-100 hover:bg-emerald-500 hover:text-white text-slate-600 flex items-center justify-center transition-all duration-200"
+                aria-label="GitHub"
+              >
+                <Github className="w-4 h-4" />
+              </a>
+            )}
+            {contact.linkedin && (
+              <a
+                href={contact.linkedin}
+                target="_blank"
+                rel="noreferrer"
+                className="w-9 h-9 rounded-full bg-slate-100 hover:bg-emerald-500 hover:text-white text-slate-600 flex items-center justify-center transition-all duration-200"
+                aria-label="LinkedIn"
+              >
+                <Linkedin className="w-4 h-4" />
+              </a>
+            )}
+            {contact.email && (
+              <a
+                href={`mailto:${contact.email}`}
+                className="w-9 h-9 rounded-full bg-slate-100 hover:bg-emerald-500 hover:text-white text-slate-600 flex items-center justify-center transition-all duration-200"
+                aria-label="Email"
+              >
+                <Mail className="w-4 h-4" />
+              </a>
+            )}
+            {contact.whatsapp && (
+              <a
+                href={`https://wa.me/${contact.whatsapp.replace(/[^0-9]/g, '')}`}
+                target="_blank"
+                rel="noreferrer"
+                className="w-9 h-9 rounded-full bg-slate-100 hover:bg-emerald-500 hover:text-white text-slate-600 flex items-center justify-center transition-all duration-200"
+                aria-label="WhatsApp"
+              >
+                <MessageSquare className="w-4 h-4" />
+              </a>
+            )}
+            {contact.instagram && (
+              <a
+                href={contact.instagram}
+                target="_blank"
+                rel="noreferrer"
+                className="w-9 h-9 rounded-full bg-slate-100 hover:bg-emerald-500 hover:text-white text-slate-600 flex items-center justify-center transition-all duration-200"
+                aria-label="Instagram"
+              >
+                <Instagram className="w-4 h-4" />
+              </a>
+            )}
+            {contact.x && (
+              <a
+                href={contact.x}
+                target="_blank"
+                rel="noreferrer"
+                className="w-9 h-9 rounded-full bg-slate-100 hover:bg-emerald-500 hover:text-white text-slate-600 flex items-center justify-center transition-all duration-200"
+                aria-label="X Twitter"
+              >
+                <Twitter className="w-4 h-4" />
+              </a>
+            )}
           </div>
         </div>
 
-        <div className="mt-10 pt-8 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-3">
-          <p className="text-sm text-muted flex items-center justify-center gap-1">
-            &copy; {currentYear} {profile?.name || "M. Ihwal Maulana"}. Dibuat dengan{" "}
-            <Heart className="w-4 h-4 text-red-500 inline" /> menggunakan Next.js &amp;
-            Tailwind CSS
-          </p>
-          <VisitorCounter />
+        {/* Bottom Bar */}
+        <div className="pt-8 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-4">
+          <div>
+            {settings.footerText || `© ${new Date().getFullYear()} M. Ihwal Maulana. All rights reserved.`}
+          </div>
+
+          <div className="flex items-center gap-6">
+            <span className="inline-flex items-center gap-1.5 text-emerald-600 font-medium">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+              Live CMS Active
+            </span>
+
+            <button
+              onClick={scrollToTop}
+              className="inline-flex items-center gap-1.5 text-slate-500 hover:text-slate-900 transition-colors cursor-pointer"
+            >
+              <span>Back To Top</span>
+              <ArrowUp className="w-3.5 h-3.5" />
+            </button>
+          </div>
         </div>
       </div>
     </footer>
   );
-}
+};
