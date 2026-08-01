@@ -29,21 +29,31 @@ export const AboutSection: React.FC = () => {
     const intervalTime = duration / steps;
     let step = 0;
 
+    const targetProjects = about.stats?.totalProjects ?? 18;
+    const targetExp = about.stats?.yearsExperience ?? 4;
+    const targetTech = about.stats?.technologiesCount ?? 24;
+    const targetGithub = about.stats?.githubContributions ?? 1420;
+
     const timer = setInterval(() => {
       step++;
       const progress = Math.min(step / steps, 1);
       setCounter({
-        projects: Math.floor(progress * (about.stats?.totalProjects || 18)),
-        experience: Math.floor(progress * (about.stats?.yearsExperience || 4)),
-        tech: Math.floor(progress * (about.stats?.technologiesCount || 24)),
-        github: Math.floor(progress * (about.stats?.githubContributions || 1420))
+        projects: Math.floor(progress * targetProjects),
+        experience: Math.floor(progress * targetExp),
+        tech: Math.floor(progress * targetTech),
+        github: Math.floor(progress * targetGithub)
       });
 
       if (step >= steps) clearInterval(timer);
     }, intervalTime);
 
     return () => clearInterval(timer);
-  }, [about.stats]);
+  }, [
+    about.stats?.totalProjects,
+    about.stats?.yearsExperience,
+    about.stats?.technologiesCount,
+    about.stats?.githubContributions
+  ]);
 
   return (
     <section id="about" className="py-24 lg:py-28 bg-slate-50/50 border-y border-slate-200/60">
